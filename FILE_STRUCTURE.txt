@@ -1,0 +1,54 @@
+barbershop_app/
+├── android/
+│   └── app/
+│       └── src/
+│           └── main/
+│               └── AndroidManifest.xml          ← Permissions + deep links
+├── ios/
+│   └── Runner/
+│       └── Info.plist                           ← iOS permissions + URL schemes
+├── lib/
+│   ├── main.dart                                ← App entry, Supabase init, notifications
+│   ├── models/
+│   │   └── models.dart                          ← ServiceModel, BarberModel, BookingModel, etc.
+│   ├── providers/
+│   │   └── app_provider.dart                    ← Riverpod providers + demo seed data
+│   ├── screens/
+│   │   ├── splash_screen.dart                   ← Animated splash with radial rings
+│   │   ├── onboarding_screen.dart               ← 4-page onboarding flow
+│   │   ├── auth_screen.dart                     ← Sign in / sign up / guest
+│   │   ├── main_shell.dart                      ← Bottom nav shell (5 tabs + admin)
+│   │   ├── home_screen.dart                     ← Hero banner, quick actions, stats
+│   │   ├── services_screen.dart                 ← Category filter + service cards
+│   │   ├── booking_screen.dart                  ← 3-step: service → date/time → barber
+│   │   ├── payment_screen.dart                  ← Stripe-like UI + confetti success
+│   │   ├── barbers_screen.dart                  ← Barber profile cards with gallery
+│   │   ├── barber_detail_screen.dart            ← Full barber page, gallery, reviews
+│   │   ├── reviews_screen.dart                  ← Star breakdown + review cards
+│   │   ├── location_screen.dart                 ← Custom map, call, WhatsApp, email
+│   │   ├── profile_screen.dart                  ← Profile, preferences, booking history
+│   │   ├── notifications_screen.dart            ← Dismissible notification feed
+│   │   ├── search_screen.dart                   ← Real-time search + recent/popular
+│   │   ├── loyalty_screen.dart                  ← Points, tiers, rewards, history
+│   │   └── admin_screen.dart                    ← KPI dashboard, bookings, service CRUD
+│   ├── services/
+│   │   ├── supabase_service.dart                ← All Supabase API calls + realtime
+│   │   └── notification_service.dart            ← Local push notifications + scheduling
+│   ├── utils/
+│   │   ├── app_theme.dart                       ← AppColors, AppTheme (dark + gold)
+│   │   ├── app_router.dart                      ← GoRouter config + deep link routes
+│   │   ├── constants.dart                       ← App strings (EN/AR), constants, keys
+│   │   └── helpers.dart                         ← Date/price formatters, validators, extensions
+│   └── widgets/
+│       ├── common_widgets.dart                  ← GoldButton, ServiceCard, BarberCard, etc.
+│       └── shimmer_widgets.dart                 ← Skeleton loading screens
+├── supabase/
+│   ├── schema.sql                               ← Full PostgreSQL schema + RLS + seed data
+│   └── functions/
+│       ├── send-booking-email/index.ts          ← Email confirmations via Resend
+│       └── send-reminder/index.ts               ← WhatsApp reminders via Twilio
+├── assets/
+│   ├── images/                                  ← Add your barber photos here
+│   └── icons/                                   ← Add custom icons here
+├── pubspec.yaml                                 ← All Flutter dependencies
+└── README.md                                    ← Full setup guide
