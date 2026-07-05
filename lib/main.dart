@@ -34,17 +34,7 @@ Future<void> main() async {
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrZXNkZGJuZG1mYndic2R2ZWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzMxOTksImV4cCI6MjA5NDUwOTE5OX0.EWzwM7R1FB5-M_rZnQBR58CCoK3OutDC3VATCUBP7Tw",
       debug: false);
 
-  // await Supabase.initialize(
-  //   url: const String.fromEnvironment(
-  //     'SUPABASE_URL',
-  //     defaultValue: 'https://your-project.supabase.co',
-  //   ),
-  //   anonKey: const String.fromEnvironment(
-  //     'SUPABASE_ANON_KEY',
-  //     defaultValue: 'your-anon-key',
-  //   ),
-  //   debug: false,
-  // );
+  
 
   runApp(const ProviderScope(child: NoirBarberApp()));
 }

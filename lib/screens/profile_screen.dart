@@ -1,4 +1,5 @@
 // lib/screens/profile_screen.dart
+import 'package:barbershop_app/providers/profile_provider.dart';
 import 'package:barbershop_app/screens/auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -22,11 +23,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _tabs = TabController(length: 2, vsync: this);
+  // }
+
   @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this);
-  }
+void initState() {
+  super.initState();
+  _tabs = TabController(length: 2, vsync: this);
+
+  Future.microtask(() async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+
+    if (currentUser != null) {
+      await ref
+          .read(profileProvider.notifier)
+          .loadProfile(currentUser.id);
+    }
+  });
+}
 
   @override
   void dispose() {
@@ -36,14 +53,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = ref.watch(languageProvider) == 'ar';
+  //  final isArabic = ref.watch(languageProvider) == 'ar';
+    final user = ref.watch(profileProvider);
     final bookings = ref.watch(bookingHistoryProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
-          SliverToBoxAdapter(child: _buildHeader(isArabic)),
+          SliverToBoxAdapter(child: _buildHeader(user)),
         ],
         body: Column(
           children: [
@@ -61,10 +79,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
-                tabs: [
-                  Tab(text: isArabic ? 'الملف الشخصي' : 'Profile'),
-                  Tab(text: isArabic ? 'الحجوزات' : 'Bookings'),
-                ],
+                // tabs: [
+                //   Tab(text: isArabic ? 'الملف الشخصي' : 'Profile'),
+                //   Tab(text: isArabic ? 'الحجوزات' : 'Bookings'),
+                // ],
+                tabs: const [
+                 Tab(text: 'Profile'),
+                 Tab(text: 'Bookings'),
+             ],
               ),
             ),
 
@@ -72,8 +94,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               child: TabBarView(
                 controller: _tabs,
                 children: [
-                  _buildProfileTab(isArabic),
-                  _buildBookingsTab(isArabic, bookings),
+                  _buildProfileTab(user),
+                  _buildBookingsTab(bookings),
                 ],
               ),
             ),
@@ -83,7 +105,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildHeader(bool isArabic) {
+  Widget _buildHeader(UserModel? user) {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, MediaQuery.of(context).padding.top + 20, 20, 24),
@@ -140,17 +162,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
           const SizedBox(height: 16),
 
-          Text(
-            isArabic ? 'جون سميث' : 'John Smith',
-            style: GoogleFonts.cormorantGaramond(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ).animate(delay: 100.ms).fadeIn(),
+         Text(
+  user?.name ?? "Guest User",
+  style: GoogleFonts.cormorantGaramond(
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+  ),
+),
 
           Text(
-            isArabic ? 'عضو مميز' : 'Premium Member',
+            'Premium Member',
             style: GoogleFonts.raleway(
               fontSize: 13,
               color: AppColors.textGold,
@@ -164,11 +186,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _headerStat('8', isArabic ? 'زيارة' : 'Visits', '💈'),
+             _headerStat('8', 'Visits', '💈'),
               Container(width: 1, height: 36, color: AppColors.surfaceHighest),
-              _headerStat('4.9', isArabic ? 'تقييمي' : 'My Rating', '⭐'),
+             _headerStat('4.9', 'My Rating', '⭐'),
               Container(width: 1, height: 36, color: AppColors.surfaceHighest),
-              _headerStat('£240', isArabic ? 'أنفقت' : 'Spent', '💷'),
+             _headerStat('£240', 'Spent', '💷'),
             ],
           ).animate(delay: 200.ms).fadeIn(),
         ],
@@ -200,75 +222,83 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildProfileTab(bool isArabic) {
+  Widget _buildProfileTab(UserModel? user) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionTitle(isArabic ? 'المعلومات الشخصية' : 'Personal Info'),
+         _sectionTitle('Personal Info'),
           const SizedBox(height: 12),
           _infoTile(
             Icons.person_rounded,
-            isArabic ? 'الاسم الكامل' : 'Full Name',
-            isArabic ? 'جون سميث' : 'John Smith',
+           'Full Name',
+           user?.name ?? 'Guest User',
           ),
           _infoTile(
             Icons.phone_rounded,
-            isArabic ? 'الهاتف' : 'Phone',
-            '+44 7700 900123',
+           'Phone',
+            user?.phone ?? 'Not Available',
           ),
           _infoTile(
             Icons.mail_rounded,
-            isArabic ? 'البريد الإلكتروني' : 'Email',
-            'john.smith@email.com',
+           'Email',
+           user?.email ?? 'Not Available',
           ),
           _infoTile(
             Icons.location_on_rounded,
-            isArabic ? 'الموقع' : 'Location',
+           'Location',
             'London, UK',
           ),
           const SizedBox(height: 28),
-          _sectionTitle(isArabic ? 'التفضيلات' : 'Preferences'),
+         _sectionTitle('Preferences'),
           const SizedBox(height: 12),
           _toggleTile(
             Icons.notifications_rounded,
-            isArabic ? 'الإشعارات' : 'Notifications',
+           'Notifications',
             true,
           ),
           _toggleTile(
             Icons.calendar_today_rounded,
-            isArabic ? 'تذكير الحجز' : 'Booking Reminders',
+           'Booking Reminders',
             true,
           ),
           _toggleTile(
             Icons.local_offer_rounded,
-            isArabic ? 'العروض الترويجية' : 'Promotions',
+           'Promotions',
             false,
           ),
           const SizedBox(height: 28),
-          _sectionTitle(isArabic ? 'اللغة' : 'Language'),
-          const SizedBox(height: 12),
-          _languageSwitcher(isArabic),
-          const SizedBox(height: 28),
-          _sectionTitle(isArabic ? 'الحساب' : 'Account'),
+        _sectionTitle('Account'),
           const SizedBox(height: 12),
           _actionTile(
               Icons.shield_rounded,
-              isArabic ? 'الأمان والخصوصية' : 'Security & Privacy',
+             'Security & Privacy',
               AppColors.info),
           _actionTile(
               Icons.help_outline_rounded,
-              isArabic ? 'مساعدة ودعم' : 'Help & Support',
+              'Help & Support',
               AppColors.textSecondary),
           _actionTile(Icons.star_rounded,
-              isArabic ? 'تقييم التطبيق' : 'Rate the App', AppColors.gold),
+              'Rate the App', AppColors.gold),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () {},
+         OutlinedButton.icon(
+  onPressed: () async {
+    await Supabase.instance.client.auth.signOut();
+
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AuthScreen(),
+        ),
+        (route) => false,
+      );
+    }
+  },
             icon: const Icon(Icons.logout_rounded, size: 18),
-            label: Text(isArabic ? 'تسجيل الخروج' : 'Sign Out'),
+           label: const Text('Sign Out'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               foregroundColor: AppColors.error,
@@ -284,7 +314,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _buildBookingsTab(bool isArabic, List<BookingModel> bookings) {
+ Widget _buildBookingsTab(List<BookingModel> bookings) {
     if (bookings.isEmpty) {
       return Center(
         child: Column(
@@ -293,7 +323,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             const Text('📅', style: TextStyle(fontSize: 60)),
             const SizedBox(height: 16),
             Text(
-              isArabic ? 'لا توجد حجوزات بعد' : 'No bookings yet',
+              'No bookings yet',
               style: GoogleFonts.cormorantGaramond(
                 fontSize: 24,
                 color: AppColors.textSecondary,
@@ -338,7 +368,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _statusLabel(booking.status, isArabic),
+                      _statusLabel(booking.status),
                         style: GoogleFonts.raleway(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -409,7 +439,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         icon: const Icon(Icons.star_outline_rounded,
                             size: 16, color: AppColors.gold),
                         label: Text(
-                          isArabic ? 'تقييم' : 'Review',
+                          'Review',
                           style: GoogleFonts.raleway(
                             fontSize: 13,
                             color: AppColors.gold,
@@ -423,7 +453,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         icon: const Icon(Icons.cancel_outlined,
                             size: 16, color: AppColors.error),
                         label: Text(
-                          isArabic ? 'إلغاء' : 'Cancel',
+                           'Cancel',
                           style: GoogleFonts.raleway(
                             fontSize: 13,
                             color: AppColors.error,
@@ -454,18 +484,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
   }
 
-  String _statusLabel(BookingStatus status, bool isArabic) {
-    switch (status) {
-      case BookingStatus.confirmed:
-        return isArabic ? 'مؤكد' : 'Confirmed';
-      case BookingStatus.completed:
-        return isArabic ? 'مكتمل' : 'Completed';
-      case BookingStatus.cancelled:
-        return isArabic ? 'ملغي' : 'Cancelled';
-      case BookingStatus.pending:
-        return isArabic ? 'قيد الانتظار' : 'Pending';
-    }
+ String _statusLabel(BookingStatus status) {
+  switch (status) {
+    case BookingStatus.confirmed:
+      return 'Confirmed';
+    case BookingStatus.completed:
+      return 'Completed';
+    case BookingStatus.cancelled:
+      return 'Cancelled';
+    case BookingStatus.pending:
+      return 'Pending';
   }
+}
 
   Widget _sectionTitle(String title) {
     return Text(
@@ -554,62 +584,62 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  Widget _languageSwitcher(bool isArabic) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceHighest),
-      ),
-      padding: const EdgeInsets.all(6),
-      child: Row(
-        children: [
-          _langOption('EN', 'English', !isArabic),
-          const SizedBox(width: 6),
-          _langOption('AR', 'العربية', isArabic),
-        ],
-      ),
-    );
-  }
+  // Widget _languageSwitcher(bool isArabic) {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: AppColors.surfaceElevated,
+  //       borderRadius: BorderRadius.circular(14),
+  //       border: Border.all(color: AppColors.surfaceHighest),
+  //     ),
+  //     padding: const EdgeInsets.all(6),
+  //     child: Row(
+  //       children: [
+  //         _langOption('EN', 'English', !isArabic),
+  //         const SizedBox(width: 6),
+  //         _langOption('AR', 'العربية', isArabic),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _langOption(String code, String label, bool isActive) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          ref.read(languageProvider.notifier).state = code.toLowerCase();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            gradient: isActive ? AppColors.goldGradient : null,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            children: [
-              Text(
-                code,
-                style: GoogleFonts.raleway(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: isActive ? AppColors.background : AppColors.textMuted,
-                ),
-              ),
-              Text(
-                label,
-                style: GoogleFonts.raleway(
-                  fontSize: 11,
-                  color: isActive
-                      ? AppColors.background.withOpacity(0.7)
-                      : AppColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _langOption(String code, String label, bool isActive) {
+  //   return Expanded(
+  //     child: GestureDetector(
+  //       onTap: () {
+  //         ref.read(languageProvider.notifier).state = code.toLowerCase();
+  //       },
+  //       child: AnimatedContainer(
+  //         duration: const Duration(milliseconds: 200),
+  //         padding: const EdgeInsets.symmetric(vertical: 12),
+  //         decoration: BoxDecoration(
+  //           gradient: isActive ? AppColors.goldGradient : null,
+  //           borderRadius: BorderRadius.circular(10),
+  //         ),
+  //         child: Column(
+  //           children: [
+  //             Text(
+  //               code,
+  //               style: GoogleFonts.raleway(
+  //                 fontSize: 16,
+  //                 fontWeight: FontWeight.w800,
+  //                 color: isActive ? AppColors.background : AppColors.textMuted,
+  //               ),
+  //             ),
+  //             Text(
+  //               label,
+  //               style: GoogleFonts.raleway(
+  //                 fontSize: 11,
+  //                 color: isActive
+  //                     ? AppColors.background.withOpacity(0.7)
+  //                     : AppColors.textMuted,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _actionTile(IconData icon, String label, Color iconColor) {
     return Container(
@@ -634,19 +664,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
-        onTap: () async {
-          await Supabase.instance.client.auth.signOut();
+        onTap: () {},
+        // onTap: () async {
+        //   await Supabase.instance.client.auth.signOut();
 
-          if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (_) => AuthScreen(),
-              ),
-              (route) => false,
-            );
-          }
-        },
+        //   if (context.mounted) {
+        //     Navigator.of(context).pushAndRemoveUntil(
+        //       MaterialPageRoute(
+        //         builder: (_) => AuthScreen(),
+        //       ),
+        //       (route) => false,
+        //     );
+        //   }
+        // },
       ),
     );
   }
 }
+
+
+

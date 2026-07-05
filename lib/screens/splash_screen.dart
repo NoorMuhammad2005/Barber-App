@@ -1,8 +1,10 @@
 // lib/screens/splash_screen.dart
+import 'package:barbershop_app/screens/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_theme.dart';
 import 'auth_screen.dart';
 
@@ -18,34 +20,6 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _rotateCtrl;
   late AnimationController _pulseCtrl;
 
-  @override
-  void initState() {
-    super.initState();
-
-    _rotateCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
-
-    // Navigate after intro
-    Future.delayed(const Duration(milliseconds: 3200), () {
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => AuthScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
-    });
-  }
 
   @override
   void dispose() {
@@ -53,6 +27,46 @@ class _SplashScreenState extends State<SplashScreen>
     _pulseCtrl.dispose();
     super.dispose();
   }
+
+  @override
+void initState() {
+  super.initState();
+
+  _rotateCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  )..repeat();
+
+  _pulseCtrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat(reverse: true);
+
+  _checkLogin();
+}
+
+Future<void> _checkLogin() async {
+  await Future.delayed(const Duration(milliseconds: 3200));
+
+  if (!mounted) return;
+
+  final session = Supabase.instance.client.auth.currentSession;
+
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder(
+      pageBuilder: (_, __, ___) {
+        if (session != null) {
+          return MainShell();
+        } else {
+          return AuthScreen();
+        }
+      },
+      transitionsBuilder: (_, animation, __, child) =>
+          FadeTransition(opacity: animation, child: child),
+      transitionDuration: const Duration(milliseconds: 800),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
