@@ -1,4 +1,5 @@
 // lib/screens/booking_screen.dart
+import 'package:barbershop_app/providers/booking_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +37,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = ref.watch(languageProvider) == 'ar';
+ // final isArabic = ref.watch(languageProvider) == 'ar';
     final selectedService = ref.watch(selectedServiceProvider);
     final selectedBarber = ref.watch(selectedBarberProvider);
     final selectedDate = ref.watch(selectedDateProvider);
@@ -53,7 +54,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isArabic ? 'حجز موعد' : 'Book Appointment',
+          'Book Appointment',
           style: GoogleFonts.cormorantGaramond(
             fontSize: 22,
             fontWeight: FontWeight.w700,
@@ -64,25 +65,24 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
       body: Column(
         children: [
           // Step Indicator
-          _buildStepIndicator(isArabic),
+          _buildStepIndicator(),
 
           const SizedBox(height: 24),
 
           Expanded(
             child: IndexedStack(
-              index: _currentStep,
-              children: [
-                _buildStep1SelectService(isArabic),
-                _buildStep2SelectDateTime(isArabic, selectedDate),
-                _buildStep3SelectBarber(isArabic),
-              ],
-            ),
+  index: _currentStep,
+  children: [
+    _buildStep1SelectService(),
+    _buildStep3SelectBarber(),
+    _buildStep2SelectDateTime(selectedDate),
+  ],
+)
           ),
 
           // Bottom Bar
           _buildBottomBar(
             context,
-            isArabic,
             selectedService,
             selectedBarber,
             selectedSlot,
@@ -92,15 +92,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     );
   }
 
-  Widget _buildStepIndicator(bool isArabic) {
-    final steps = isArabic
-        ? ['الخدمة', 'الموعد', 'الحلاق']
-        : ['Service', 'Date & Time', 'Barber'];
+  Widget _buildStepIndicator() {
+  final steps = [
+  'Service',
+  'Barber',
+  'Date & Time',
+];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         children: steps.asMap().entries.map((entry) {
           final i = entry.key;
           final step = entry.value;
@@ -185,7 +186,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     );
   }
 
-  Widget _buildStep1SelectService(bool isArabic) {
+  Widget _buildStep1SelectService() {
     final services = ref.watch(servicesProvider);
     final selected = ref.watch(selectedServiceProvider);
 
@@ -199,7 +200,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
           child: ServiceCard(
             service: services[i],
             isSelected: selected?.id == services[i].id,
-            isArabic: isArabic,
+            // isArabic: isArabic,
             onTap: () {
               ref.read(selectedServiceProvider.notifier).state = services[i];
             },
@@ -209,9 +210,21 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     );
   }
 
-  Widget _buildStep2SelectDateTime(bool isArabic, DateTime selectedDate) {
+  Widget _buildStep2SelectDateTime( DateTime selectedDate) {
     final slots = ref.watch(timeSlotsProvider);
-    final selectedSlot = ref.watch(selectedTimeSlotProvider);
+final selectedBarber = ref.watch(selectedBarberProvider);
+final selectedSlot = ref.watch(selectedTimeSlotProvider);
+
+final bookedSlots = selectedBarber == null
+    ? const AsyncValue<List<String>>.data([])
+    : ref.watch(
+        bookedSlotsProvider(
+          (
+            barberId: selectedBarber.id,
+            date: selectedDate,
+          ),
+        ),
+      );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -231,9 +244,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
               lastDay: DateTime.now().add(const Duration(days: 60)),
               focusedDay: selectedDate,
               selectedDayPredicate: (day) => isSameDay(day, selectedDate),
-              onDaySelected: (selected, focused) {
-                ref.read(selectedDateProvider.notifier).state = selected;
-              },
+            onDaySelected: (selected, focused) {
+  ref.read(selectedDateProvider.notifier).state = selected;
+},
               calendarStyle: CalendarStyle(
                 outsideDaysVisible: false,
                 selectedDecoration: const BoxDecoration(
@@ -295,7 +308,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
           const SizedBox(height: 24),
 
           Text(
-            isArabic ? 'اختر الوقت' : 'Select Time',
+            'Select Time',
             style: GoogleFonts.cormorantGaramond(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -317,10 +330,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
             itemCount: slots.length,
             itemBuilder: (context, i) {
               final slot = slots[i];
+              final booked = bookedSlots.when(
+  data: (list) => list.contains(slot.time),
+  loading: () => false,
+  error: (_, __) => false,
+);  
               final isSelected = selectedSlot?.time == slot.time;
 
               return GestureDetector(
-                onTap: slot.isAvailable
+               onTap: slot.isAvailable && !booked
                     ? () {
                         ref.read(selectedTimeSlotProvider.notifier).state =
                             slot;
@@ -332,17 +350,17 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                     gradient: isSelected ? AppColors.goldGradient : null,
                     color: isSelected
                         ? null
-                        : slot.isAvailable
+                        : slot.isAvailable && !booked
                             ? AppColors.surfaceElevated
                             : AppColors.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.gold
-                          : slot.isAvailable
-                              ? AppColors.surfaceHighest
-                              : AppColors.surfaceHighest.withOpacity(0.3),
-                    ),
+                  border: Border.all(
+  color: isSelected
+      ? AppColors.gold
+      : (slot.isAvailable && !booked)
+          ? AppColors.surfaceHighest
+          : AppColors.surfaceHighest.withOpacity(0.3),
+),
                   ),
                   child: Center(
                     child: Text(
@@ -351,13 +369,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                         color: isSelected
-                            ? AppColors.background
-                            : slot.isAvailable
-                                ? AppColors.textPrimary
-                                : AppColors.textMuted,
-                        decoration: slot.isAvailable
-                            ? null
-                            : TextDecoration.lineThrough,
+    ? AppColors.background
+    : booked
+        ? AppColors.textMuted
+        : AppColors.textPrimary,
+                       decoration: booked
+    ? TextDecoration.lineThrough
+    : null,
                       ),
                     ),
                   ),
@@ -372,14 +390,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
           Row(
             children: [
               _legendItem(AppColors.surfaceElevated, AppColors.surfaceHighest,
-                  isArabic ? 'متاح' : 'Available'),
+                  'Available'),
               const SizedBox(width: 16),
               _legendItem(AppColors.gold.withOpacity(0.1), AppColors.gold,
-                  isArabic ? 'محدد' : 'Selected'),
+                'Selected'),
               const SizedBox(width: 16),
               _legendItem(AppColors.surface,
                   AppColors.surfaceHighest.withOpacity(0.3),
-                  isArabic ? 'محجوز' : 'Booked'),
+                'Booked'),
             ],
           ),
 
@@ -413,7 +431,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     );
   }
 
-  Widget _buildStep3SelectBarber(bool isArabic) {
+  Widget _buildStep3SelectBarber() {
     final barbers = ref.watch(barbersProvider);
     final selectedBarber = ref.watch(selectedBarberProvider);
 
@@ -508,7 +526,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                           children: [
                             Expanded(
                               child: Text(
-                                isArabic ? barber.nameAr : barber.name,
+                                barber.name,
                                 style: GoogleFonts.raleway(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -527,7 +545,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  isArabic ? 'غير متاح' : 'Unavailable',
+                                  'Unavailable',
                                   style: GoogleFonts.raleway(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -539,7 +557,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isArabic ? barber.specialtyAr : barber.specialty,
+                          barber.specialty,
                           style: GoogleFonts.raleway(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -577,7 +595,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              '${barber.experienceYears} ${isArabic ? 'سنة' : 'yrs'}',
+                              '${barber.experienceYears} ${'yrs'}',
                               style: GoogleFonts.raleway(
                                 fontSize: 12,
                                 color: AppColors.textGold,
@@ -611,7 +629,6 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
   Widget _buildBottomBar(
     BuildContext context,
-    bool isArabic,
     ServiceModel? service,
     BarberModel? barber,
     TimeSlot? slot,
@@ -626,17 +643,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         border: const Border(top: BorderSide(color: AppColors.surfaceHighest)),
       ),
       child: Row(
-        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+      //  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         children: [
           if (service != null)
             Expanded(
               child: Column(
-                crossAxisAlignment: isArabic
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
+               crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isArabic ? service.nameAr : service.name,
+                    service.name,
                     style: GoogleFonts.raleway(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -662,15 +677,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
           GoldButton(
             label: _currentStep < 2
-                ? (isArabic ? 'التالي' : 'Next')
-                : (isArabic ? 'تأكيد الحجز' : 'Confirm'),
+                ? ('Next')
+                : ('Confirm'),
             width: _currentStep < 2 ? 120 : 160,
             onTap: canProceed
                 ? () {
                     if (_currentStep < 2) {
                       setState(() => _currentStep++);
                     } else {
-                      _confirmBooking(context, isArabic, service, barber, slot);
+                      _confirmBooking(context,  service, barber, slot);
                     }
                   }
                 : () {},
@@ -682,25 +697,41 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
 
   bool _canProceed(ServiceModel? service, BarberModel? barber, TimeSlot? slot) {
     switch (_currentStep) {
-      case 0:
-        return service != null;
-      case 1:
-        return slot != null;
-      case 2:
-        return barber != null;
-      default:
-        return false;
-    }
+  case 0:
+    return service != null;
+
+  case 1:
+    return barber != null;
+
+  case 2:
+    return slot != null;
+
+  default:
+    return false;
+}
   }
 
-  void _confirmBooking(
-    BuildContext context,
-    bool isArabic,
-    ServiceModel? service,
-    BarberModel? barber,
-    TimeSlot? slot,
-  ) {
-    if (service == null || barber == null || slot == null) return;
+ Future<void> _confirmBooking(
+  BuildContext context,
+  ServiceModel? service,
+  BarberModel? barber,
+  TimeSlot? slot,
+) async {
+  if (service == null || barber == null || slot == null) return;
+
+  try {
+    await ref.read(bookingServiceProvider).createBooking(
+      barberId: barber.id,
+      serviceId: service.id,
+      date: ref.read(selectedDateProvider),
+      timeSlot: slot.time,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Booking Confirmed"),
+      ),
+    );
 
     Navigator.push(
       context,
@@ -713,5 +744,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
         ),
       ),
     );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+      ),
+    );
   }
+}
 }
