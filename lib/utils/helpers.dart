@@ -87,8 +87,8 @@ void showGoldSnackBar(BuildContext context, String message,
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isError
-              ? AppColors.error.withOpacity(0.4)
-              : AppColors.gold.withOpacity(0.4),
+              ? AppColors.error.withValues(alpha: 0.4)
+              : AppColors.gold.withValues(alpha: 0.4),
         ),
       ),
       margin: const EdgeInsets.all(16),

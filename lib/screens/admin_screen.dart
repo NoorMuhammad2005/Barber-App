@@ -74,7 +74,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
             decoration: BoxDecoration(
               color: AppColors.goldGlow,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
             ),
             child: Text(
               isArabic ? 'تجريبي' : 'DEMO',
@@ -208,7 +208,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (val) => FlLine(
+                  getDrawingHorizontalLine: (val) => const FlLine(
                     color: AppColors.surfaceHighest,
                     strokeWidth: 1,
                   ),
@@ -295,7 +295,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 18),
@@ -305,7 +305,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: (isPositive ? AppColors.success : AppColors.error)
-                      .withOpacity(0.15),
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -451,7 +451,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(

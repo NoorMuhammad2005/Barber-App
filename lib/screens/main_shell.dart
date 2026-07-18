@@ -19,13 +19,13 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(bottomNavIndexProvider);
-    final isArabic = ref.watch(languageProvider) == 'ar';
+   // final isArabic = ref.watch(languageProvider) == 'ar';
 
     final screens = [
       const HomeScreen(),
       const ServicesScreen(),
       const BookingScreen(),
-      const LocationScreen(),
+   //   const LocationScreen(),
       const ProfileScreen(),
     ];
 
@@ -35,33 +35,33 @@ class MainShell extends ConsumerWidget {
         index: index,
         children: screens,
       ),
-      bottomNavigationBar: _buildNavBar(context, ref, index, isArabic),
+      bottomNavigationBar: _buildNavBar(context, ref, index, ),
     );
   }
 
   Widget _buildNavBar(
-      BuildContext context, WidgetRef ref, int currentIndex, bool isArabic) {
+      BuildContext context, WidgetRef ref, int currentIndex, ) {
     final items = [
-      (Icons.home_rounded, Icons.home_outlined, isArabic ? 'الرئيسية' : 'Home'),
+      (Icons.home_rounded, Icons.home_outlined, 'Home'),
       (
         Icons.content_cut_rounded,
         Icons.content_cut_outlined,
-        isArabic ? 'الخدمات' : 'Services'
+        'Services'
       ),
       (
         Icons.calendar_today_rounded,
         Icons.calendar_today_outlined,
-        isArabic ? 'حجز' : 'Book'
+        'Book'
       ),
-      (
-        Icons.location_on_rounded,
-        Icons.location_on_outlined,
-        isArabic ? 'الموقع' : 'Location'
-      ),
+      // (
+      //   Icons.location_on_rounded,
+      //   Icons.location_on_outlined,
+      //   'Location'
+      // ),
       (
         Icons.person_rounded,
         Icons.person_outlined,
-        isArabic ? 'حسابي' : 'Profile'
+        'Profile'
       ),
     ];
 
@@ -73,7 +73,7 @@ class MainShell extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -103,7 +103,7 @@ class MainShell extends ConsumerWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gold.withOpacity(0.4),
+                            color: AppColors.gold.withValues(alpha: 0.4),
                             blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
@@ -175,7 +175,7 @@ class MainShell extends ConsumerWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        isArabic ? 'إدارة' : 'Admin',
+                         'Admin',
                         style: GoogleFonts.raleway(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,

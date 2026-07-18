@@ -134,7 +134,7 @@ class NotificationsScreen extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.15),
+          color: AppColors.error.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline_rounded,
@@ -149,7 +149,7 @@ class NotificationsScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: n.isUnread
-                ? AppColors.gold.withOpacity(0.2)
+                ? AppColors.gold.withValues(alpha: 0.2)
                 : AppColors.surfaceHighest,
           ),
         ),
@@ -160,7 +160,7 @@ class NotificationsScreen extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: n.color.withOpacity(0.12),
+              color: n.color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(

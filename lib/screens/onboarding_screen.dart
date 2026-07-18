@@ -19,41 +19,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _page = 0;
 
   final _pages = [
-    _OnboardPage(
+    const _OnboardPage(
       emoji: '✂️',
       tag: 'PREMIUM CUTS',
       title: 'Master Barbers\nat Your Fingertips',
       subtitle:
           'Book with award-winning barbers who have shaped icons across London, Riyadh and Dubai.',
-      bgColor: const Color(0xFF1A1500),
+      bgColor: Color(0xFF1A1500),
       accentColor: AppColors.gold,
     ),
-    _OnboardPage(
+    const _OnboardPage(
       emoji: '📅',
       tag: 'INSTANT BOOKING',
       title: 'Book in Seconds,\nNot Minutes',
       subtitle:
           'Pick your service, choose a time slot that works for you, select your barber — done.',
-      bgColor: const Color(0xFF001A0D),
-      accentColor: const Color(0xFF2ECC71),
+      bgColor: Color(0xFF001A0D),
+      accentColor: Color(0xFF2ECC71),
     ),
-    _OnboardPage(
+    const _OnboardPage(
       emoji: '💳',
       tag: 'SECURE PAYMENTS',
       title: 'Pay Safely\nOnline or In Store',
       subtitle:
           'Card, Apple Pay, PayPal — all payments are 256-bit SSL encrypted for your peace of mind.',
-      bgColor: const Color(0xFF00081A),
-      accentColor: const Color(0xFF3498DB),
+      bgColor: Color(0xFF00081A),
+      accentColor: Color(0xFF3498DB),
     ),
-    _OnboardPage(
+    const _OnboardPage(
       emoji: '🌍',
       tag: 'MULTILINGUAL',
       title: 'English &\nArabic Support',
       subtitle:
           'Full Arabic language support for our clients in Saudi Arabia, UAE, and the wider Middle East.',
-      bgColor: const Color(0xFF1A000D),
-      accentColor: const Color(0xFFE74C3C),
+      bgColor: Color(0xFF1A000D),
+      accentColor: Color(0xFFE74C3C),
     ),
   ];
 
@@ -192,10 +192,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: page.accentColor.withOpacity(0.12),
+                  color: page.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                    color: page.accentColor.withOpacity(0.25),
+                    color: page.accentColor.withValues(alpha: 0.25),
                     width: 1.5,
                   ),
                 ),
@@ -213,9 +213,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: page.accentColor.withOpacity(0.12),
+                  color: page.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: page.accentColor.withOpacity(0.25)),
+                  border: Border.all(color: page.accentColor.withValues(alpha: 0.25)),
                 ),
                 child: Text(
                   page.tag,
@@ -268,7 +268,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 6,
                     margin: const EdgeInsets.only(right: 6),
                     decoration: BoxDecoration(
-                      color: page.accentColor.withOpacity(0.5),
+                      color: page.accentColor.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                   ),

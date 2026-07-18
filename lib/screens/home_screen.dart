@@ -26,16 +26,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<Map<String, String>> _banners = [
     {
       'title': 'Book Your Haircut\nin Seconds',
-      'titleAr': 'احجز قصتك\nفي ثوانٍ',
       'subtitle': 'Premium service. Zero wait.',
-      'subtitleAr': 'خدمة فاخرة. بدون انتظار.',
       'tag': 'NEW APP',
     },
     {
       'title': 'Meet Our\nMaster Barbers',
-      'titleAr': 'تعرف على\nحلاقينا المحترفين',
       'subtitle': '12+ years of crafted excellence',
-      'subtitleAr': '12+ سنة من التميز',
       'tag': 'EXPERTS',
     },
     {
@@ -68,232 +64,349 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           slivers: [
             // ── App Bar ──────────────────────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 0,
-              floating: true,
-              backgroundColor: AppColors.background,
-              elevation: 0,
-              flexibleSpace: null,
-              title: Row(
-                textDirection:
-                    isArabic ? TextDirection.rtl : TextDirection.ltr,
-                children: [
-                  // Logo
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: AppColors.goldGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Center(
-                      child: Text('✂️', style: TextStyle(fontSize: 20)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'NOIR BARBER',
-                        style: GoogleFonts.cormorantGaramond(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.gold,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      Text(
-                        isArabic ? 'لندن • الرياض' : 'London • Riyadh',
-                        style: GoogleFonts.raleway(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Notification Bell
-                  Stack(
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: AppColors.textPrimary,
-                          size: 26,
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.gold,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+  floating: true,
+  pinned: true,
+  elevation: 0,
+  toolbarHeight: 72,
+  backgroundColor: const Color(0xFF111111),
+
+  titleSpacing: 20,
+
+  title: Row(
+    children: [
+      Hero(
+        tag: "logo",
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: AppColors.goldGradient,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.gold.withOpacity(.30),
+                blurRadius: 18,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text(
+              "✂️",
+              style: TextStyle(fontSize: 22),
+            ),
+          ),
+        ),
+      ),
+
+      const SizedBox(width: 14),
+
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            Text(
+              "NOIR BARBER",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: AppColors.gold,
               ),
             ),
 
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
+            const SizedBox(height: 2),
 
-                  // ── Hero Banner ────────────────────────────────────────────
-                  _buildHeroBanner(isArabic).animate().fadeIn(
-                        duration: 600.ms,
-                        curve: Curves.easeOut,
-                      ),
+            Row(
+              children: [
 
-                  const SizedBox(height: 8),
+                Icon(
+                  Icons.location_on_rounded,
+                  color: AppColors.gold.withOpacity(.85),
+                  size: 12,
+                ),
 
-                  // Page Indicator
-                  Center(
-                    child: SmoothPageIndicator(
-                      controller: _bannerController,
-                      count: _banners.length,
-                      effect: const ExpandingDotsEffect(
-                        activeDotColor: AppColors.gold,
-                        dotColor: AppColors.surfaceHighest,
-                        dotHeight: 6,
-                        dotWidth: 6,
-                        expansionFactor: 3,
-                      ),
-                    ),
+                const SizedBox(width: 4),
+
+                Text(
+                  isArabic
+                      ? "لندن • الرياض"
+                      : "London ",
+                  style: GoogleFonts.raleway(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w500,
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
 
-                  const SizedBox(height: 32),
+      Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.surfaceHighest,
+          ),
+        ),
+        child: Stack(
+          children: [
+
+            Center(
+              child: IconButton(
+                splashRadius: 22,
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+
+            Positioned(
+              top: 11,
+              right: 11,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: AppColors.gold,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+
+           SliverToBoxAdapter(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+
+      const SizedBox(height: 16),
+
+      // Hero Banner
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: _buildHeroBanner(isArabic)
+            .animate()
+            .fadeIn(
+              duration: 700.ms,
+              curve: Curves.easeOut,
+            )
+            .slideY(
+              begin: .15,
+              duration: 700.ms,
+              curve: Curves.easeOut,
+            ),
+      ),
+
+      const SizedBox(height: 16),
+
+      // Page Indicator
+      Center(
+        child: SmoothPageIndicator(
+          controller: _bannerController,
+          count: _banners.length,
+          effect: ExpandingDotsEffect(
+            activeDotColor: AppColors.gold,
+            dotColor: AppColors.surfaceHighest.withOpacity(.6),
+            dotHeight: 7,
+            dotWidth: 7,
+            expansionFactor: 4,
+            spacing: 8,
+            radius: 20,
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 36),
 
                   // ── Quick Actions ──────────────────────────────────────────
                   _buildQuickActions(context, isArabic)
-                      .animate()
-                      .slideY(
-                        begin: 0.2,
-                        duration: 500.ms,
-                        delay: 200.ms,
-                        curve: Curves.easeOut,
-                      )
-                      .fadeIn(delay: 200.ms),
+    .animate()
+    .slideY(
+      begin: 0.2,
+      duration: 500.ms,
+      delay: 200.ms,
+      curve: Curves.easeOut,
+    )
+    .fadeIn(delay: 200.ms),
 
-                  const SizedBox(height: 32),
+const SizedBox(height: 40),
 
-                  // ── Popular Services ───────────────────────────────────────
-                  SectionHeader(
-                    title: 'Popular Services',
-                    titleAr: 'الخدمات الشائعة',
-                    action: isArabic ? 'عرض الكل' : 'See All',
-                    onAction: () => Navigator.push(
+// ───────────────── Popular Services ─────────────────
+Container(
+  margin: const EdgeInsets.symmetric(horizontal: 20),
+  padding: const EdgeInsets.symmetric(
+    horizontal: 18,
+    vertical: 20,
+  ),
+  decoration: BoxDecoration(
+    color: AppColors.surfaceElevated,
+    borderRadius: BorderRadius.circular(24),
+    border: Border.all(
+      color: AppColors.gold.withOpacity(.18),
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(.30),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+    ],
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SectionHeader(
+        title: 'Popular Services',
+        titleAr: 'الخدمات الشائعة',
+        action: isArabic ? 'عرض الكل' : 'See All',
+        onAction: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const ServicesScreen(),
+            ),
+          );
+        },
+        isArabic: isArabic,
+      ),
+
+      const SizedBox(height: 20),
+
+      SizedBox(
+        height: 150,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount:
+              services.where((s) => s.isPopular).length,
+          itemBuilder: (context, i) {
+            final popularServices =
+                services.where((s) => s.isPopular).toList();
+
+            final service = popularServices[i];
+
+            return Padding(
+              padding: EdgeInsets.only(
+                right: isArabic ? 0 : 14,
+                left: isArabic ? 14 : 0,
+              ),
+              child: SizedBox(
+                width: 245,
+                child: ServiceCard(
+                  service: service,
+                  isSelected: false,
+                  isArabic: isArabic,
+                  isCompact: true,
+                  onTap: () {
+                    ref
+                        .read(selectedServiceProvider.notifier)
+                        .state = service;
+
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const ServicesScreen()),
-                    ),
-                    isArabic: isArabic,
+                        builder: (_) => const BookingScreen(),
+                      ),
+                    );
+                  },
+                ),
+              )
+                  .animate(delay: (i * 100).ms)
+                  .fadeIn()
+                  .slideX(
+                    begin: 0.25,
+                    duration: 500.ms,
+                    curve: Curves.easeOut,
                   ),
-                  const SizedBox(height: 16),
+            );
+          },
+        ),
+      ),
+    ],
+  ),
+).animate().fadeIn().slideY(begin: .15),
 
-                  SizedBox(
-                    height: 100,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: services
-                          .where((s) => s.isPopular)
-                          .length,
-                      itemBuilder: (context, i) {
-                        final popularServices =
-                            services.where((s) => s.isPopular).toList();
-                        final service = popularServices[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            right: isArabic ? 0 : 12,
-                            left: isArabic ? 12 : 0,
-                          ),
-                          child: ServiceCard(
-                            service: service,
-                            isSelected: false,
-                            isArabic: isArabic,
-                            isCompact: true,
-                            onTap: () {
-                              ref
-                                  .read(selectedServiceProvider.notifier)
-                                  .state = service;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const BookingScreen()),
-                              );
-                            },
-                          ),
-                        ).animate(delay: (i * 100).ms).slideX(
-                              begin: isArabic ? 0.2 : -0.2,
-                              duration: 400.ms,
-                              curve: Curves.easeOut,
-                            ).fadeIn(delay: (i * 100).ms);
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
+const SizedBox(height: 40),
 
                   // ── Our Barbers ────────────────────────────────────────────
-                  SectionHeader(
-                    title: 'Our Barbers',
-                    titleAr: 'حلاقونا',
-                    action: isArabic ? 'عرض الكل' : 'See All',
-                    onAction: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const BarbersScreen()),
-                    ),
-                    isArabic: isArabic,
-                  ),
-                  const SizedBox(height: 16),
+                SectionHeader(
+  title: 'Our Barbers',
+  titleAr: 'حلاقونا',
+  action: isArabic ? 'عرض الكل' : 'See All',
+  onAction: () => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const BarbersScreen(),
+    ),
+  ),
+  isArabic: isArabic,
+),
 
-                  SizedBox(
-                    height: 210,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: barbers.length,
-                      itemBuilder: (context, i) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            right: isArabic ? 0 : 12,
-                            left: isArabic ? 12 : 0,
-                          ),
-                          child: BarberCard(
-                            barber: barbers[i],
-                            isArabic: isArabic,
-                            onTap: () {
-                              ref
-                                  .read(selectedBarberProvider.notifier)
-                                  .state = barbers[i];
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const BookingScreen()),
-                              );
-                            },
-                          ),
-                        ).animate(delay: (i * 100).ms).slideX(
-                              begin: isArabic ? 0.2 : -0.2,
-                              duration: 400.ms,
-                              curve: Curves.easeOut,
-                            ).fadeIn(delay: (i * 100).ms);
-                      },
-                    ),
-                  ),
+const SizedBox(height: 18),
 
-                  const SizedBox(height: 32),
+SizedBox(
+  height: 245,
+  child: ListView.separated(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    scrollDirection: Axis.horizontal,
+    itemCount: barbers.length,
+    separatorBuilder: (_, __) => const SizedBox(width: 16),
+    itemBuilder: (context, i) {
+      final barber = barbers[i];
+
+      return SizedBox(
+        width: 185,
+        child: BarberCard(
+          barber: barber,
+          isArabic: isArabic,
+          onTap: () {
+            ref.read(selectedBarberProvider.notifier).state = barber;
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const BookingScreen(),
+              ),
+            );
+          },
+        ),
+      )
+          .animate(delay: (i * 120).ms)
+          .fadeIn(duration: 500.ms)
+          .slideX(
+            begin: .25,
+            curve: Curves.easeOutCubic,
+          )
+          .scale(
+            begin: const Offset(.92, .92),
+            curve: Curves.easeOutBack,
+          );
+    },
+  ),
+),
+
+const SizedBox(height: 36),
 
                   // ── Stats Row ──────────────────────────────────────────────
                   _buildStatsRow(isArabic),
@@ -349,10 +462,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                border: Border.all(color: AppColors.goldDark.withOpacity(0.4)),
+                border: Border.all(color: AppColors.goldDark.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.gold.withOpacity(0.1),
+                    color: AppColors.gold.withValues(alpha: 0.1),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   ),
@@ -384,7 +497,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: AppColors.goldGlow,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: AppColors.gold.withOpacity(0.3)),
+                                color: AppColors.gold.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             banner['tag']!,
@@ -427,11 +540,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     left: isArabic ? 0 : null,
                     top: 0,
                     bottom: 0,
-                    child: Opacity(
+                    child: const Opacity(
                       opacity: 0.15,
                       child: Text(
                         '✂️',
-                        style: const TextStyle(fontSize: 120),
+                        style: TextStyle(fontSize: 120),
                       ),
                     ),
                   ),
@@ -551,7 +664,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   border: i < stats.length - 1
-                      ? Border(
+                      ? const Border(
                           right: BorderSide(
                             color: AppColors.surfaceHighest,
                           ),
@@ -615,7 +728,7 @@ class _GridPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.gold.withOpacity(0.05)
+      ..color = AppColors.gold.withValues(alpha: 0.05)
       ..strokeWidth = 0.5;
 
     const spacing = 30.0;

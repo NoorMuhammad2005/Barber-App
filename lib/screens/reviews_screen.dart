@@ -55,7 +55,7 @@ class ReviewsScreen extends ConsumerWidget {
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                          color: AppColors.goldDark.withOpacity(0.3)),
+                          color: AppColors.goldDark.withValues(alpha: 0.3)),
                     ),
                     padding: const EdgeInsets.all(24),
                     child: Row(

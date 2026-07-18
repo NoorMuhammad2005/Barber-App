@@ -34,7 +34,7 @@ class BarberDetailScreen extends ConsumerWidget {
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.8),
+                  color: AppColors.background.withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back_ios_new_rounded,
@@ -45,7 +45,7 @@ class BarberDetailScreen extends ConsumerWidget {
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.8),
+                  color: AppColors.background.withValues(alpha: 0.8),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -95,7 +95,7 @@ class BarberDetailScreen extends ConsumerWidget {
                         color: (barber.isAvailable
                                 ? AppColors.success
                                 : AppColors.error)
-                            .withOpacity(0.2),
+                            .withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: barber.isAvailable
@@ -294,11 +294,11 @@ class BarberDetailScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 5, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.background.withOpacity(0.8),
+                                  color: AppColors.background.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  '${['Fade', 'Classic', 'Beard', 'Style', 'Facial', 'Shave'][i]}',
+                                  ['Fade', 'Classic', 'Beard', 'Style', 'Facial', 'Shave'][i],
                                   style: GoogleFonts.raleway(
                                     fontSize: 8,
                                     color: AppColors.textSecondary,

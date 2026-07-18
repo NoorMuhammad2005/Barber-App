@@ -58,7 +58,7 @@ class BarbersScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.goldDark.withOpacity(0.2),
+                          AppColors.goldDark.withValues(alpha: 0.2),
                           AppColors.background,
                         ],
                         begin: Alignment.topCenter,
@@ -88,7 +88,7 @@ class BarbersScreen extends ConsumerWidget {
                                   color: AppColors.gold, width: 2.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.gold.withOpacity(0.3),
+                                  color: AppColors.gold.withValues(alpha: 0.3),
                                   blurRadius: 20,
                                 ),
                               ],
@@ -114,10 +114,10 @@ class BarbersScreen extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withOpacity(0.2),
+                                color: AppColors.error.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                    color: AppColors.error.withOpacity(0.4)),
+                                    color: AppColors.error.withValues(alpha: 0.4)),
                               ),
                               child: Text(
                                 isArabic ? 'غير متاح اليوم' : 'Unavailable Today',
@@ -278,7 +278,7 @@ class _DiamondPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.gold.withOpacity(0.06)
+      ..color = AppColors.gold.withValues(alpha: 0.06)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 

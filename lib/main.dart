@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'package:barbershop_app/screens/app_start.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,8 +49,8 @@ class NoirBarberApp extends ConsumerWidget {
       title: 'Noir Barber',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      // Entry point: Splash → Onboarding (first time) → Auth → App
-      home: const SplashScreen(),
+      
+      home: const AppStartup(),
     );
   }
 }

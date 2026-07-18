@@ -48,7 +48,7 @@ class HomeShimmer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Banner
-          ShimmerBox(
+          const ShimmerBox(
             width: double.infinity,
             height: 180,
             borderRadius: 20,
@@ -60,10 +60,10 @@ class HomeShimmer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(
               4,
-              (_) => Column(
+              (_) => const Column(
                 children: [
-                  const ShimmerBox(width: 60, height: 60, borderRadius: 16),
-                  const SizedBox(height: 6),
+                  ShimmerBox(width: 60, height: 60, borderRadius: 16),
+                  SizedBox(height: 6),
                   ShimmerBox(width: 40, height: 10),
                 ],
               ),

@@ -53,6 +53,7 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
+  
 
 dev_dependencies:
   flutter_test:
@@ -61,14 +62,39 @@ dev_dependencies:
   riverpod_generator: ^2.3.9
   build_runner: ^2.4.8
 
+  flutter_native_splash: ^2.4.8
+  flutter_launcher_icons: ^0.14.4
+  
+
 flutter:
   uses-material-design: true
- # assets:
- #   - assets/images/
- #   - assets/icons/
- # fonts:
- #   - family: Playfair
- #     fonts:
- #       - asset: assets/fonts/PlayfairDisplay-Regular.ttf
- #       - asset: assets/fonts/PlayfairDisplay-Bold.ttf
- #         weight: 700
+
+  assets:
+    - assets/app_icon.png
+    - assets/splash_logo.png
+    - assets/login_banner.png
+
+flutter_native_splash:
+  color: "#0A0A0A"
+  image: assets/splash_logo.png
+
+  android: true
+  ios: true
+
+  android_gravity: center
+  ios_content_mode: center
+
+  android_12:
+    color: "#0A0A0A"
+    image: assets/splash_logo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/app_icon.png"
+
+  adaptive_icon_background: "#0A0A0A"
+  adaptive_icon_foreground: "assets/app_icon.png"
+
+  remove_alpha_ios: true

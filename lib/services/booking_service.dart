@@ -10,6 +10,9 @@ class BookingService {
     required String timeSlot,
   }) async {
     final user = _client.auth.currentUser!;
+    if (user == null) {
+   throw Exception("Please login first.");
+  }
 
     final existing = await _client
     .from('bookings')

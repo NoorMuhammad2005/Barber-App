@@ -1,4 +1,6 @@
 // lib/screens/payment_screen.dart
+import 'package:barbershop_app/providers/booking_provider.dart';
+import 'package:barbershop_app/screens/main_shell.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,6 +59,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   Future<void> _processPayment() async {
     setState(() => _isProcessing = true);
     await Future.delayed(const Duration(seconds: 2));
+
+     await ref.read(bookingServiceProvider).createBooking(
+    barberId: widget.barber.id,
+    serviceId: widget.service.id,
+    date: widget.selectedDate,
+    timeSlot: widget.timeSlot.time,
+  );
+  
     setState(() {
       _isProcessing = false;
       _isSuccess = true;
@@ -157,7 +167,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ),
               borderRadius: BorderRadius.circular(20),
               border:
-                  Border.all(color: AppColors.goldDark.withOpacity(0.4)),
+                  Border.all(color: AppColors.goldDark.withValues(alpha: 0.4)),
             ),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -327,7 +337,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -430,7 +440,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               style: GoogleFonts.raleway(color: AppColors.textPrimary),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: isArabic ? 'رقم البطاقة' : 'Card Number',
+                labelText: 'Card Number',
                 prefixIcon: const Icon(Icons.credit_card,
                     color: AppColors.textMuted, size: 20),
                 suffixIcon: const Icon(Icons.lock_rounded,
@@ -445,7 +455,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     controller: _expiryController,
                     style: GoogleFonts.raleway(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      labelText: isArabic ? 'انتهاء' : 'Expiry',
+                      labelText: 'Expiry',
                     ),
                   ),
                 ),
@@ -455,7 +465,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     controller: _cvvController,
                     style: GoogleFonts.raleway(color: AppColors.textPrimary),
                     obscureText: true,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'CVV',
                     ),
                   ),
@@ -474,9 +484,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   color: AppColors.success, size: 14),
               const SizedBox(width: 6),
               Text(
-                isArabic
-                    ? 'دفع آمن مشفر بـ 256-bit SSL'
-                    : '256-bit SSL Encrypted Secure Payment',
+               '256-bit SSL Encrypted Secure Payment',
                 style: GoogleFonts.raleway(
                   fontSize: 12,
                   color: AppColors.textMuted,
@@ -489,8 +497,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
           GoldButton(
             label: _isProcessing
-                ? (isArabic ? 'جاري المعالجة...' : 'Processing...')
-                : (isArabic ? 'ادفع £${total.toStringAsFixed(2)}' : 'Pay £${total.toStringAsFixed(2)}'),
+                ? ('Processing...')
+                : ('Pay £${total.toStringAsFixed(2)}'),
             isLoading: _isProcessing,
             icon: _isProcessing ? null : Icons.lock_rounded,
             onTap: _processPayment,
@@ -527,120 +535,125 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   Widget _buildSuccessScreen(BuildContext context, bool isArabic) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Success animation
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: AppColors.goldGradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.gold.withOpacity(0.4),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.check_rounded,
-                color: AppColors.background,
-                size: 60,
-              ),
-            ).animate().scale(
-                  duration: 600.ms,
-                  curve: Curves.elasticOut,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Success animation
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppColors.goldGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.gold.withValues(alpha: 0.4),
+                      blurRadius: 40,
+                      spreadRadius: 10,
+                    ),
+                  ],
                 ),
-
-            const SizedBox(height: 32),
-
-            Text(
-              isArabic ? 'تم الحجز بنجاح! 🎉' : 'Booking Confirmed! 🎉',
-              style: GoogleFonts.cormorantGaramond(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.2),
-
-            const SizedBox(height: 12),
-
-            Text(
-              isArabic
-                  ? 'تم تأكيد موعدك. سنرسل لك تذكيرًا قبل ساعة.'
-                  : 'Your appointment is confirmed. We\'ll send a reminder 1 hour before.',
-              style: GoogleFonts.raleway(
-                fontSize: 15,
-                color: AppColors.textSecondary,
-                height: 1.6,
-              ),
-              textAlign: TextAlign.center,
-            ).animate(delay: 400.ms).fadeIn(),
-
-            const SizedBox(height: 32),
-
-            // Booking Details Card
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.surfaceHighest),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _confirmRow('📋', isArabic ? 'الخدمة' : 'Service',
-                      isArabic ? widget.service.nameAr : widget.service.name),
-                  const Divider(color: AppColors.surfaceHighest, height: 20),
-                  _confirmRow('👨‍🦱', isArabic ? 'الحلاق' : 'Barber',
-                      isArabic ? widget.barber.nameAr : widget.barber.name),
-                  const Divider(color: AppColors.surfaceHighest, height: 20),
-                  _confirmRow('📅', isArabic ? 'التاريخ' : 'Date',
-                      DateFormat('EEE, MMM d').format(widget.selectedDate)),
-                  const Divider(color: AppColors.surfaceHighest, height: 20),
-                  _confirmRow('🕐', isArabic ? 'الوقت' : 'Time',
-                      widget.timeSlot.time),
-                  const Divider(color: AppColors.surfaceHighest, height: 20),
-                  _confirmRow(
-                      '💷',
-                      isArabic ? 'المدفوع' : 'Paid',
-                      '£${widget.service.price.toStringAsFixed(2)}',
-                      isGold: true),
-                ],
-              ),
-            ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.2),
-
-            const SizedBox(height: 32),
-
-            GoldButton(
-              label: isArabic ? 'العودة إلى الرئيسية' : 'Back to Home',
-              icon: Icons.home_rounded,
-              onTap: () {
-                Navigator.of(context)
-                    .popUntil((route) => route.isFirst);
-              },
-            ).animate(delay: 700.ms).fadeIn(),
-
-            const SizedBox(height: 12),
-
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.share_rounded, size: 18),
-              label: Text(isArabic ? 'مشاركة التأكيد' : 'Share Confirmation'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                foregroundColor: AppColors.textSecondary,
-                side: const BorderSide(color: AppColors.surfaceHighest),
-              ),
-            ).animate(delay: 800.ms).fadeIn(),
-          ],
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.background,
+                  size: 60,
+                ),
+              ).animate().scale(
+                    duration: 600.ms,
+                    curve: Curves.elasticOut,
+                  ),
+        
+              const SizedBox(height: 32),
+        
+              Text(
+                'Booking Confirmed! 🎉',
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.2),
+        
+              const SizedBox(height: 12),
+        
+              Text(
+                'Your appointment is confirmed. We\'ll send a reminder 1 hour before.',
+                style: GoogleFonts.raleway(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
+                  height: 1.6,
+                ),
+                textAlign: TextAlign.center,
+              ).animate(delay: 400.ms).fadeIn(),
+        
+              const SizedBox(height: 32),
+        
+              // Booking Details Card
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.surfaceHighest),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _confirmRow('📋', 'Service',
+                        isArabic ? widget.service.nameAr : widget.service.name),
+                    const Divider(color: AppColors.surfaceHighest, height: 20),
+                    _confirmRow('👨‍🦱', 'Barber',
+                        isArabic ? widget.barber.nameAr : widget.barber.name),
+                    const Divider(color: AppColors.surfaceHighest, height: 20),
+                    _confirmRow('📅','Date',
+                        DateFormat('EEE, MMM d').format(widget.selectedDate)),
+                    const Divider(color: AppColors.surfaceHighest, height: 20),
+                    _confirmRow('🕐', 'Time',
+                        widget.timeSlot.time),
+                    const Divider(color: AppColors.surfaceHighest, height: 20),
+                    _confirmRow(
+                        '💷',
+                        'Paid',
+                        '£${widget.service.price.toStringAsFixed(2)}',
+                        isGold: true),
+                  ],
+                ),
+              ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.2),
+        
+             const SizedBox(height: 16),
+        
+              GoldButton(
+                label:'Back to Home',
+                icon: Icons.home_rounded,
+                onTap: () {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const MainShell(),
+    ),
+    (route) => false,
+  );
+},
+              ).animate(delay: 700.ms).fadeIn(),
+        
+              const SizedBox(height: 12),
+        
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.share_rounded, size: 18),
+                label: Text('Share Confirmation'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: AppColors.textSecondary,
+                  side: const BorderSide(color: AppColors.surfaceHighest),
+                ),
+              ).animate(delay: 800.ms).fadeIn(),
+            ],
+          ),
         ),
       ),
     );

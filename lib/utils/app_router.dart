@@ -1,4 +1,5 @@
 // lib/utils/app_router.dart
+import 'package:barbershop_app/screens/app_start.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         name: 'splash',
-        builder: (_, __) => const SplashScreen(),
+        builder: (_, __) => const AppStartup(),
       ),
 
       // ── Onboarding ─────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Main Shell (bottom nav) ────────────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) {
-          return MainShell();
+          return const MainShell();
         },
         routes: [
           GoRoute(
@@ -125,7 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           children: [
             const Text('⚠️', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Page not found',
               style: TextStyle(
                 color: Colors.white,

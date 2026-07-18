@@ -67,7 +67,7 @@ class LocationScreen extends ConsumerWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.gold.withOpacity(0.4),
+                                color: AppColors.gold.withValues(alpha: 0.4),
                                 blurRadius: 20,
                               ),
                             ],
@@ -83,7 +83,7 @@ class LocationScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: AppColors.background.withOpacity(0.9),
+                            color: AppColors.background.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -287,7 +287,7 @@ class LocationScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -296,7 +296,7 @@ class LocationScreen extends ConsumerWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 22),

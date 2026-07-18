@@ -129,7 +129,7 @@ void initState() {
                   gradient: AppColors.goldGradient,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.gold.withOpacity(0.4),
+                      color: AppColors.gold.withValues(alpha: 0.4),
                       blurRadius: 24,
                       spreadRadius: 4,
                     ),
@@ -302,7 +302,7 @@ void initState() {
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               foregroundColor: AppColors.error,
-              side: BorderSide(color: AppColors.error.withOpacity(0.3)),
+              side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -350,7 +350,7 @@ void initState() {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: isUpcoming
-                    ? AppColors.gold.withOpacity(0.3)
+                    ? AppColors.gold.withValues(alpha: 0.3)
                     : AppColors.surfaceHighest,
               ),
             ),
@@ -364,7 +364,7 @@ void initState() {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _statusColor(booking.status).withOpacity(0.15),
+                        color: _statusColor(booking.status).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -576,7 +576,7 @@ void initState() {
           Switch(
             value: value,
             onChanged: (_) {},
-            activeColor: AppColors.gold,
+            activeThumbColor: AppColors.gold,
             inactiveTrackColor: AppColors.surfaceHighest,
           ),
         ],

@@ -103,10 +103,10 @@ class LoyaltyScreen extends ConsumerWidget {
                 ),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                    color: AppColors.goldDark.withOpacity(0.4)),
+                    color: AppColors.goldDark.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.gold.withOpacity(0.1),
+                    color: AppColors.gold.withValues(alpha: 0.1),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   ),
@@ -180,11 +180,11 @@ class LoyaltyScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
+                    child: const LinearProgressIndicator(
                       value: pct,
                       backgroundColor: AppColors.surfaceHighest,
                       valueColor:
-                          const AlwaysStoppedAnimation(AppColors.gold),
+                          AlwaysStoppedAnimation(AppColors.gold),
                       minHeight: 8,
                     ),
                   ),
@@ -302,7 +302,7 @@ class LoyaltyScreen extends ConsumerWidget {
                             color: (event.isEarned
                                     ? AppColors.success
                                     : AppColors.error)
-                                .withOpacity(0.12),
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -409,7 +409,7 @@ class LoyaltyScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: r.isUnlocked
-              ? AppColors.gold.withOpacity(0.3)
+              ? AppColors.gold.withValues(alpha: 0.3)
               : AppColors.surfaceHighest,
         ),
       ),

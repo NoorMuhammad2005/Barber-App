@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_theme.dart';
 import '../providers/app_provider.dart';
-import '../models/models.dart';
 import '../widgets/common_widgets.dart';
 import 'booking_screen.dart';
 

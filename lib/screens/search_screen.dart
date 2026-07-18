@@ -286,7 +286,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         color: AppColors.goldGlow,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: AppColors.gold.withOpacity(0.2)),
+                            color: AppColors.gold.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,

@@ -57,11 +57,9 @@ class AppTheme {
         primary: AppColors.gold,
         secondary: AppColors.goldLight,
         surface: AppColors.surface,
-        background: AppColors.background,
         onPrimary: AppColors.background,
         onSecondary: AppColors.background,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
       ),
       textTheme: GoogleFonts.cormorantGaramondTextTheme().copyWith(
         displayLarge: GoogleFonts.cormorantGaramond(

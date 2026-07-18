@@ -257,7 +257,7 @@ final bookedSlots = selectedBarber == null
                   color: AppColors.background,
                   fontWeight: FontWeight.w700,
                 ),
-                todayDecoration: BoxDecoration(
+                todayDecoration: const BoxDecoration(
                   color: AppColors.goldGlow,
                   shape: BoxShape.circle,
                 ),
@@ -359,7 +359,7 @@ final bookedSlots = selectedBarber == null
       ? AppColors.gold
       : (slot.isAvailable && !booked)
           ? AppColors.surfaceHighest
-          : AppColors.surfaceHighest.withOpacity(0.3),
+          : AppColors.surfaceHighest.withValues(alpha: 0.3),
 ),
                   ),
                   child: Center(
@@ -392,11 +392,11 @@ final bookedSlots = selectedBarber == null
               _legendItem(AppColors.surfaceElevated, AppColors.surfaceHighest,
                   'Available'),
               const SizedBox(width: 16),
-              _legendItem(AppColors.gold.withOpacity(0.1), AppColors.gold,
+              _legendItem(AppColors.gold.withValues(alpha: 0.1), AppColors.gold,
                 'Selected'),
               const SizedBox(width: 16),
               _legendItem(AppColors.surface,
-                  AppColors.surfaceHighest.withOpacity(0.3),
+                  AppColors.surfaceHighest.withValues(alpha: 0.3),
                 'Booked'),
             ],
           ),
@@ -463,7 +463,7 @@ final bookedSlots = selectedBarber == null
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppColors.gold.withOpacity(0.15),
+                          color: AppColors.gold.withValues(alpha: 0.15),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -541,7 +541,7 @@ final bookedSlots = selectedBarber == null
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: AppColors.error.withOpacity(0.15),
+                                  color: AppColors.error.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -638,9 +638,9 @@ final bookedSlots = selectedBarber == null
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: const Border(top: BorderSide(color: AppColors.surfaceHighest)),
+        border: Border(top: BorderSide(color: AppColors.surfaceHighest)),
       ),
       child: Row(
       //  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
@@ -710,8 +710,7 @@ final bookedSlots = selectedBarber == null
     return false;
 }
   }
-
- Future<void> _confirmBooking(
+Future<void> _confirmBooking(
   BuildContext context,
   ServiceModel? service,
   BarberModel? barber,
@@ -719,37 +718,17 @@ final bookedSlots = selectedBarber == null
 ) async {
   if (service == null || barber == null || slot == null) return;
 
-  try {
-    await ref.read(bookingServiceProvider).createBooking(
-      barberId: barber.id,
-      serviceId: service.id,
-      date: ref.read(selectedDateProvider),
-      timeSlot: slot.time,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Booking Confirmed"),
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PaymentScreen(
+        service: service,
+        barber: barber,
+        timeSlot: slot,
+        selectedDate: ref.read(selectedDateProvider),
       ),
-    );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          service: service,
-          barber: barber,
-          timeSlot: slot,
-          selectedDate: ref.read(selectedDateProvider),
-        ),
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.toString()),
-      ),
-    );
-  }
+    ),
+  );
 }
-}
+ }
+    
