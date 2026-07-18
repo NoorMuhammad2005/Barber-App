@@ -275,7 +275,7 @@ Container(
     ],
   ),
   child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       SectionHeader(
         title: 'Popular Services',
