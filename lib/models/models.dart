@@ -24,6 +24,20 @@ class ServiceModel {
     required this.category,
     this.isPopular = false,
   });
+  factory ServiceModel.fromMap(Map<String, dynamic> map) {
+  return ServiceModel(
+    id: map['id'],
+    name: map['name'] ?? '',
+    nameAr: map['name_ar'] ?? '',
+    description: map['description'] ?? '',
+    descriptionAr: map['description_ar'] ?? '',
+    price: (map['price'] ?? 0).toDouble(),
+    durationMinutes: map['duration_minutes'] ?? 0,
+    icon: map['icon'] ?? '✂️',
+    category: map['category'] ?? '',
+    isPopular: map['is_popular'] ?? false,
+  );
+}
 }
 
 class BarberModel {
@@ -54,6 +68,22 @@ class BarberModel {
     this.isAvailable = true,
     required this.bio,
   });
+  factory BarberModel.fromMap(Map<String, dynamic> map) {
+  return BarberModel(
+    id: map['id'],
+    name: map['name'] ?? '',
+    nameAr: map['name_ar'] ?? '',
+    specialty: map['specialty'] ?? '',
+    specialtyAr: map['specialty_ar'] ?? '',
+    rating: (map['rating'] ?? 0).toDouble(),
+    reviewCount: map['review_count'] ?? 0,
+    experienceYears: map['experience_years'] ?? 0,
+    imageUrl: map['image_url'] ?? '',
+    services: List<String>.from(map['services'] ?? []),
+    bio: map['bio'] ?? '',
+    isAvailable: map['is_active'] ?? true,
+  );
+}
 }
 
 class ReviewModel {
@@ -132,6 +162,7 @@ class UserModel {
   final String email;
   final String phone;
   final String? avatarUrl;
+  final String role;
   final List<BookingModel> bookingHistory;
 
   const UserModel({
@@ -140,6 +171,7 @@ class UserModel {
     required this.email,
     required this.phone,
     this.avatarUrl,
+    required this.role,
     this.bookingHistory = const [],
   });
 }

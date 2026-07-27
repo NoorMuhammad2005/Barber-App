@@ -388,7 +388,7 @@ class ServiceCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(service.icon, style: const TextStyle(fontSize: 22)),
+                child: Text(service.icon ?? "✂️", style: const TextStyle(fontSize: 22)),
               ),
             ),
             const SizedBox(width: 12),
@@ -397,7 +397,7 @@ class ServiceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isArabic ? service.nameAr : service.name,
+                   service.name,
                     style: GoogleFonts.raleway(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -417,7 +417,7 @@ class ServiceCard extends StatelessWidget {
               ),
             ),
             Text(
-              '£${service.price.toStringAsFixed(0)}',
+            '£${service.price}',
               style: GoogleFonts.cormorantGaramond(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -426,7 +426,7 @@ class ServiceCard extends StatelessWidget {
             ),
           ],
         ),
-        if (service.isPopular) ...[
+       if (service.isPopular == true)
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -445,7 +445,7 @@ class ServiceCard extends StatelessWidget {
             ),
           ),
         ],
-      ],
+    
     );
   }
 
@@ -465,7 +465,7 @@ class ServiceCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
-                child: Text(service.icon, style: const TextStyle(fontSize: 28)),
+                child: Text(service.icon ?? "✂️", style: const TextStyle(fontSize: 28)),
               ),
             ),
             const SizedBox(width: 16),
@@ -475,7 +475,7 @@ class ServiceCard extends StatelessWidget {
                     ? CrossAxisAlignment.end
                     : CrossAxisAlignment.start,
                 children: [
-                  if (service.isPopular)
+                 if (service.isPopular == true)
                     Container(
                       margin: const EdgeInsets.only(bottom: 4),
                       padding: const EdgeInsets.symmetric(
@@ -495,7 +495,7 @@ class ServiceCard extends StatelessWidget {
                       ),
                     ),
                   Text(
-                    isArabic ? service.nameAr : service.name,
+                   service.name,
                     style: GoogleFonts.raleway(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -503,7 +503,7 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    isArabic ? service.descriptionAr : service.description,
+                   service.description,
                     style: GoogleFonts.raleway(
                       fontSize: 12,
                       color: AppColors.textMuted,
@@ -545,7 +545,7 @@ class ServiceCard extends StatelessWidget {
               ),
             ),
             Text(
-              '£${service.price.toStringAsFixed(0)}',
+             '£${service.price}',
               style: GoogleFonts.cormorantGaramond(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,

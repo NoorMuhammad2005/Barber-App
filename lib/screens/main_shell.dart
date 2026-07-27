@@ -1,4 +1,7 @@
 // lib/screens/main_shell.dart
+import 'package:barbershop_app/models/models.dart';
+import 'package:barbershop_app/providers/profile_provider.dart';
+import 'package:barbershop_app/screens/my_booking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,12 +22,13 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final index = ref.watch(bottomNavIndexProvider);
+    final user = ref.watch(profileProvider);
    // final isArabic = ref.watch(languageProvider) == 'ar';
 
     final screens = [
       const HomeScreen(),
       const ServicesScreen(),
-      const BookingScreen(),
+      const MyBookingsScreen(),
    //   const LocationScreen(),
       const ProfileScreen(),
     ];
@@ -35,12 +39,21 @@ class MainShell extends ConsumerWidget {
         index: index,
         children: screens,
       ),
-      bottomNavigationBar: _buildNavBar(context, ref, index, ),
+      bottomNavigationBar: _buildNavBar(
+  context,
+  ref,
+  index,
+  user,
+),
     );
   }
 
   Widget _buildNavBar(
-      BuildContext context, WidgetRef ref, int currentIndex, ) {
+  BuildContext context,
+  WidgetRef ref,
+  int currentIndex,
+  UserModel? user,
+) {
     final items = [
       (Icons.home_rounded, Icons.home_outlined, 'Home'),
       (
@@ -49,10 +62,10 @@ class MainShell extends ConsumerWidget {
         'Services'
       ),
       (
-        Icons.calendar_today_rounded,
-        Icons.calendar_today_outlined,
-        'Book'
-      ),
+  Icons.event_note_rounded,
+  Icons.event_note_outlined,
+  'My Bookings'
+),
       // (
       //   Icons.location_on_rounded,
       //   Icons.location_on_outlined,
@@ -156,36 +169,41 @@ class MainShell extends ConsumerWidget {
               }),
 
               // Admin button
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminScreen()),
-                ),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.admin_panel_settings_rounded,
-                        color: AppColors.textMuted,
-                        size: 24,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                         'Admin',
-                        style: GoogleFonts.raleway(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              if (user?.role == 'admin')
+  GestureDetector(
+    onTap: () => Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AdminScreen(),
+      ),
+    ),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.admin_panel_settings_rounded,
+            color: AppColors.gold,
+            size: 24,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'Admin',
+            style: GoogleFonts.raleway(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.gold,
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
             ],
           ),
         ),

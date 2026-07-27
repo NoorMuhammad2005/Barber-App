@@ -45,12 +45,13 @@ class AuthService {
 
     if (res == null) return null;
 
-    return UserModel(
-      id: res['id'],
-      name: res['name'] ?? '',
-      email: res['email'] ?? '',
-      phone: res['phone'] ?? '',
-      avatarUrl: res['avatar_url'],
-    );
+   return UserModel(
+  id: res['id'],
+  name: res['name'] ?? '',
+  email: res['email'] ?? '',
+  phone: res['phone'] ?? '',
+  avatarUrl: res['avatar_url'],
+  role: res['role'] ?? 'customer',
+);
   }
-}           
+}   

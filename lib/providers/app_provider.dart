@@ -1,141 +1,39 @@
 // lib/providers/app_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 
 // ─── Language Provider ───────────────────────────────────────────────────────
 final languageProvider = StateProvider<String>((ref) => 'en');
 
 // ─── Demo Data ───────────────────────────────────────────────────────────────
-final servicesProvider = Provider<List<ServiceModel>>((ref) => [
-  const ServiceModel(
-    id: 's1',
-    name: 'Classic Haircut',
-    nameAr: 'قصة شعر كلاسيكية',
-    description: 'Precision cut tailored to your style',
-    descriptionAr: 'قصة دقيقة مصممة وفق أسلوبك',
-    price: 25,
-    durationMinutes: 30,
-    icon: '✂️',
-    category: 'Hair',
-    isPopular: true,
-  ),
-  const ServiceModel(
-    id: 's2',
-    name: 'Beard Trim & Shape',
-    nameAr: 'تشذيب اللحية وتشكيلها',
-    description: 'Expert beard shaping and grooming',
-    descriptionAr: 'تشكيل احترافي وعناية باللحية',
-    price: 18,
-    durationMinutes: 20,
-    icon: '🪒',
-    category: 'Beard',
-    isPopular: true,
-  ),
-  const ServiceModel(
-    id: 's3',
-    name: 'Hair Styling',
-    nameAr: 'تصفيف الشعر',
-    description: 'Premium styling with top products',
-    descriptionAr: 'تصفيف فاخر بأفضل المنتجات',
-    price: 35,
-    durationMinutes: 45,
-    icon: '💈',
-    category: 'Hair',
-  ),
-  const ServiceModel(
-    id: 's4',
-    name: 'Luxury Facial',
-    nameAr: 'عناية فاخرة بالوجه',
-    description: 'Deep cleanse and rejuvenation',
-    descriptionAr: 'تنظيف عميق وتجديد للبشرة',
-    price: 45,
-    durationMinutes: 60,
-    icon: '✨',
-    category: 'Facial',
-  ),
-  const ServiceModel(
-    id: 's5',
-    name: 'Hot Towel Shave',
-    nameAr: 'حلاقة بالمنشفة الساخنة',
-    description: 'Traditional straight razor shave',
-    descriptionAr: 'حلاقة تقليدية بالموس المستقيم',
-    price: 30,
-    durationMinutes: 40,
-    icon: '🔥',
-    category: 'Shave',
-    isPopular: true,
-  ),
-  const ServiceModel(
-    id: 's6',
-    name: 'Color & Highlights',
-    nameAr: 'تلوين وهايلايت',
-    description: 'Full color or partial highlights',
-    descriptionAr: 'تلوين كامل أو هايلايت جزئي',
-    price: 65,
-    durationMinutes: 90,
-    icon: '🎨',
-    category: 'Color',
-  ),
-]);
+final servicesProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
 
-final barbersProvider = Provider<List<BarberModel>>((ref) => [
-  const BarberModel(
-    id: 'b1',
-    name: 'James Harrison',
-    nameAr: 'جيمس هاريسون',
-    specialty: 'Master Barber & Stylist',
-    specialtyAr: 'حلاق ماستر ومصفف شعر',
-    rating: 4.9,
-    reviewCount: 312,
-    experienceYears: 12,
-    imageUrl: 'https://i.pravatar.cc/300?img=11',
-    services: ['s1', 's2', 's3', 's5'],
-    bio: 'Award-winning master barber with 12+ years crafting iconic looks for clients worldwide.',
-    isAvailable: true,
-  ),
-  const BarberModel(
-    id: 'b2',
-    name: 'Marcus Williams',
-    nameAr: 'ماركوس وليامز',
-    specialty: 'Fade Specialist',
-    specialtyAr: 'متخصص الفيد',
-    rating: 4.8,
-    reviewCount: 245,
-    experienceYears: 8,
-    imageUrl: 'https://i.pravatar.cc/300?img=12',
-    services: ['s1', 's2', 's4'],
-    bio: 'Precision fade specialist known for clean lines and modern cuts.',
-    isAvailable: true,
-  ),
-  const BarberModel(
-    id: 'b3',
-    name: 'Khalid Al-Rashid',
-    nameAr: 'خالد الراشد',
-    specialty: 'Beard Artist',
-    specialtyAr: 'فنان اللحية',
-    rating: 4.9,
-    reviewCount: 189,
-    experienceYears: 10,
-    imageUrl: 'https://i.pravatar.cc/300?img=33',
-    services: ['s2', 's4', 's5'],
-    bio: 'Beard artistry master specializing in traditional and contemporary styles.',
-    isAvailable: false,
-  ),
-  const BarberModel(
-    id: 'b4',
-    name: 'Daniel Stone',
-    nameAr: 'دانيال ستون',
-    specialty: 'Color & Texture Expert',
-    specialtyAr: 'خبير الألوان والملمس',
-    rating: 4.7,
-    reviewCount: 134,
-    experienceYears: 6,
-    imageUrl: 'https://i.pravatar.cc/300?img=15',
-    services: ['s3', 's6'],
-    bio: 'Creative colorist and texture specialist bringing bold visions to life.',
-    isAvailable: true,
-  ),
-]);
+  final client = Supabase.instance.client;
+
+  final data = await client
+      .from('services')
+      .select()
+      .eq('is_active', true)
+      .order('name');
+
+  return List<Map<String, dynamic>>.from(data);
+
+});
+
+final barbersProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final client = Supabase.instance.client;
+
+  final data = await client
+      .from('barbers')
+      .select()
+      .eq('is_active', true)
+      .order('name');
+
+  return List<Map<String, dynamic>>.from(data);
+});
 
 final reviewsProvider = Provider<List<ReviewModel>>((ref) => [
   ReviewModel(
@@ -243,3 +141,28 @@ final bookingHistoryProvider = StateProvider<List<BookingModel>>((ref) => [
     status: BookingStatus.confirmed,
   ),
 ]);
+
+// ─── My Bookings Provider ─────────────────────────────────────
+
+final myBookingsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final client = Supabase.instance.client;
+
+  final user = client.auth.currentUser;
+
+  if (user == null) {
+    return [];
+  }
+
+  final data = await client
+      .from('bookings')
+      .select('''
+        *,
+        services(name,price),
+        barbers(name,image_url)
+      ''')
+      .eq('user_id', user.id)
+      .order('booking_date', ascending: false);
+
+  return List<Map<String, dynamic>>.from(data);
+});

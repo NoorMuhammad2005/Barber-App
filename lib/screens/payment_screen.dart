@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_theme.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
@@ -60,12 +61,19 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     setState(() => _isProcessing = true);
     await Future.delayed(const Duration(seconds: 2));
 
-     await ref.read(bookingServiceProvider).createBooking(
-    barberId: widget.barber.id,
-    serviceId: widget.service.id,
-    date: widget.selectedDate,
-    timeSlot: widget.timeSlot.time,
-  );
+    await ref.read(bookingServiceProvider).createBooking(
+  barberId: widget.barber.id,
+  serviceId: widget.service.id,
+  date: widget.selectedDate,
+  timeSlot: widget.timeSlot.time,
+
+  customerName: "Customer", // baad me profile se aayega
+  customerPhone: "",
+  customerEmail:
+      Supabase.instance.client.auth.currentUser?.email ?? "",
+  totalPrice: widget.service.price,
+  notes: "",
+);
   
     setState(() {
       _isProcessing = false;

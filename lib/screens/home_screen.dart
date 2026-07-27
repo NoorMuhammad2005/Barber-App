@@ -1,4 +1,5 @@
 // lib/screens/home_screen.dart
+import 'package:barbershop_app/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -254,74 +255,163 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 const SizedBox(height: 40),
 
 // ───────────────── Popular Services ─────────────────
-Container(
-  margin: const EdgeInsets.symmetric(horizontal: 20),
-  padding: const EdgeInsets.symmetric(
-    horizontal: 18,
-    vertical: 20,
+
+services.when(
+  loading: () => const Center(
+    child: CircularProgressIndicator(),
   ),
-  decoration: BoxDecoration(
-    color: AppColors.surfaceElevated,
-    borderRadius: BorderRadius.circular(24),
-    border: Border.all(
-      color: AppColors.gold.withOpacity(.18),
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(.30),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
+
+  error: (e, _) => Center(
+    child: Text(e.toString()),
+  ),
+
+  data: (serviceList) {
+    final popularServices = serviceList
+        .map((e) => ServiceModel.fromMap(e))
+        .where((s) => s.isPopular)
+        .toList();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 20,
       ),
-    ],
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.gold.withOpacity(.18),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.30),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SectionHeader(
+            title: 'Popular Services',
+            titleAr: 'الخدمات الشائعة',
+            action: isArabic ? 'عرض الكل' : 'See All',
+            onAction: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ServicesScreen(),
+                ),
+              );
+            },
+            isArabic: isArabic,
+          ),
+
+          const SizedBox(height: 20),
+
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: popularServices.length,
+              itemBuilder: (context, i) {
+                final service = popularServices[i];
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: isArabic ? 0 : 14,
+                    left: isArabic ? 14 : 0,
+                  ),
+                  child: SizedBox(
+                    width: 245,
+                    child: ServiceCard(
+                      service: service,
+                      isSelected: false,
+                      isArabic: isArabic,
+                      isCompact: true,
+                      onTap: () {
+                        ref.read(selectedServiceProvider.notifier).state =
+                            service;
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BookingScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                      .animate(delay: (i * 100).ms)
+                      .fadeIn()
+                      .slideX(
+                        begin: 0.25,
+                        duration: 500.ms,
+                        curve: Curves.easeOut,
+                      ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn().slideY(begin: .15);
+  },
+),
+
+const SizedBox(height: 40),
+
+                  // ── Our Barbers ────────────────────────────────────────────
+                barbers.when(
+  loading: () => const Center(
+    child: CircularProgressIndicator(),
   ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      SectionHeader(
-        title: 'Popular Services',
-        titleAr: 'الخدمات الشائعة',
-        action: isArabic ? 'عرض الكل' : 'See All',
-        onAction: () {
-          Navigator.push(
+
+  error: (e, _) => Center(
+    child: Text(e.toString()),
+  ),
+
+  data: (barberList) {
+    final barbersData = barberList
+        .map((e) => BarberModel.fromMap(e))
+        .toList();
+
+    return Column(
+      children: [
+        SectionHeader(
+          title: 'Our Barbers',
+          titleAr: 'حلاقونا',
+          action: isArabic ? 'عرض الكل' : 'See All',
+          onAction: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const ServicesScreen(),
+              builder: (_) => const BarbersScreen(),
             ),
-          );
-        },
-        isArabic: isArabic,
-      ),
+          ),
+          isArabic: isArabic,
+        ),
 
-      const SizedBox(height: 20),
+        const SizedBox(height: 18),
 
-      SizedBox(
-        height: 150,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount:
-              services.where((s) => s.isPopular).length,
-          itemBuilder: (context, i) {
-            final popularServices =
-                services.where((s) => s.isPopular).toList();
+        SizedBox(
+          height: 245,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: barbersData.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, i) {
+              final barber = barbersData[i];
 
-            final service = popularServices[i];
-
-            return Padding(
-              padding: EdgeInsets.only(
-                right: isArabic ? 0 : 14,
-                left: isArabic ? 14 : 0,
-              ),
-              child: SizedBox(
-                width: 245,
-                child: ServiceCard(
-                  service: service,
-                  isSelected: false,
+              return SizedBox(
+                width: 185,
+                child: BarberCard(
+                  barber: barber,
                   isArabic: isArabic,
-                  isCompact: true,
                   onTap: () {
-                    ref
-                        .read(selectedServiceProvider.notifier)
-                        .state = service;
+                    ref.read(selectedBarberProvider.notifier).state = barber;
 
                     Navigator.push(
                       context,
@@ -332,81 +422,25 @@ Container(
                   },
                 ),
               )
-                  .animate(delay: (i * 100).ms)
-                  .fadeIn()
+                  .animate(delay: (i * 120).ms)
+                  .fadeIn(duration: 500.ms)
                   .slideX(
-                    begin: 0.25,
-                    duration: 500.ms,
-                    curve: Curves.easeOut,
-                  ),
-            );
-          },
+                    begin: .25,
+                    curve: Curves.easeOutCubic,
+                  )
+                  .scale(
+                    begin: const Offset(.92, .92),
+                    curve: Curves.easeOutBack,
+                  );
+            },
+          ),
         ),
-      ),
-    ],
-  ),
-).animate().fadeIn().slideY(begin: .15),
 
-const SizedBox(height: 40),
-
-                  // ── Our Barbers ────────────────────────────────────────────
-                SectionHeader(
-  title: 'Our Barbers',
-  titleAr: 'حلاقونا',
-  action: isArabic ? 'عرض الكل' : 'See All',
-  onAction: () => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const BarbersScreen(),
-    ),
-  ),
-  isArabic: isArabic,
+        const SizedBox(height: 36),
+      ],
+    );
+  },
 ),
-
-const SizedBox(height: 18),
-
-SizedBox(
-  height: 245,
-  child: ListView.separated(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    scrollDirection: Axis.horizontal,
-    itemCount: barbers.length,
-    separatorBuilder: (_, __) => const SizedBox(width: 16),
-    itemBuilder: (context, i) {
-      final barber = barbers[i];
-
-      return SizedBox(
-        width: 185,
-        child: BarberCard(
-          barber: barber,
-          isArabic: isArabic,
-          onTap: () {
-            ref.read(selectedBarberProvider.notifier).state = barber;
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const BookingScreen(),
-              ),
-            );
-          },
-        ),
-      )
-          .animate(delay: (i * 120).ms)
-          .fadeIn(duration: 500.ms)
-          .slideX(
-            begin: .25,
-            curve: Curves.easeOutCubic,
-          )
-          .scale(
-            begin: const Offset(.92, .92),
-            curve: Curves.easeOutBack,
-          );
-    },
-  ),
-),
-
-const SizedBox(height: 36),
 
                   // ── Stats Row ──────────────────────────────────────────────
                   _buildStatsRow(isArabic),

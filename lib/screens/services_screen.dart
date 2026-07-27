@@ -1,4 +1,5 @@
 // lib/screens/services_screen.dart
+import 'package:barbershop_app/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,9 +25,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     final services = ref.watch(servicesProvider);
 
     final categories = ['All', 'Hair', 'Beard', 'Shave', 'Facial', 'Color'];
-    final filtered = _selectedCategory == 'All'
-        ? services
-        : services.where((s) => s.category == _selectedCategory).toList();
+    
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -99,38 +98,58 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
           const SizedBox(height: 20),
 
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              physics: const BouncingScrollPhysics(),
-              itemCount: filtered.length,
-              itemBuilder: (context, i) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: ServiceCard(
-                    service: filtered[i],
-                    isArabic: isArabic,
-                    onTap: () {
-                      ref.read(selectedServiceProvider.notifier).state =
-                          filtered[i];
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const BookingScreen()),
-                      );
-                    },
+         Expanded(
+  child: services.when(
+    loading: () => const Center(
+      child: CircularProgressIndicator(),
+    ),
+
+    error: (e, _) => Center(
+      child: Text(e.toString()),
+    ),
+
+    data: (serviceList) {
+      final filtered = _selectedCategory == 'All'
+          ? serviceList
+          : serviceList
+              .where((s) => s['category'] == _selectedCategory)
+              .toList();
+
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        physics: const BouncingScrollPhysics(),
+        itemCount: filtered.length,
+        itemBuilder: (context, i) {
+          final service = ServiceModel.fromMap(filtered[i]);
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: ServiceCard(
+              service: service,
+              isArabic: isArabic,
+              onTap: () {
+                ref.read(selectedServiceProvider.notifier).state = service;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BookingScreen(),
                   ),
-                )
-                    .animate(delay: (i * 80).ms)
-                    .slideY(
-                      begin: 0.15,
-                      duration: 350.ms,
-                      curve: Curves.easeOut,
-                    )
-                    .fadeIn(delay: (i * 80).ms);
+                );
               },
             ),
-          ),
+          )
+              .animate(delay: (i * 80).ms)
+              .slideY(
+                begin: .15,
+                duration: 350.ms,
+              )
+              .fadeIn();
+        },
+      );
+    },
+  ),
+),
         ],
       ),
     );

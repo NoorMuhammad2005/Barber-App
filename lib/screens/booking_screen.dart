@@ -186,29 +186,42 @@ class _BookingScreenState extends ConsumerState<BookingScreen>
     );
   }
 
-  Widget _buildStep1SelectService() {
-    final services = ref.watch(servicesProvider);
-    final selected = ref.watch(selectedServiceProvider);
+ Widget _buildStep1SelectService() {
+  final services = ref.watch(servicesProvider);
+  final selected = ref.watch(selectedServiceProvider);
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      physics: const BouncingScrollPhysics(),
-      itemCount: services.length,
-      itemBuilder: (context, i) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: ServiceCard(
-            service: services[i],
-            isSelected: selected?.id == services[i].id,
-            // isArabic: isArabic,
-            onTap: () {
-              ref.read(selectedServiceProvider.notifier).state = services[i];
-            },
-          ),
-        ).animate(delay: (i * 60).ms).fadeIn().slideY(begin: 0.1);
-      },
-    );
-  }
+  return services.when(
+    loading: () => const Center(
+      child: CircularProgressIndicator(),
+    ),
+
+    error: (e, _) => Center(
+      child: Text(e.toString()),
+    ),
+
+    data: (serviceList) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        physics: const BouncingScrollPhysics(),
+        itemCount: serviceList.length,
+        itemBuilder: (context, i) {
+          final service = ServiceModel.fromMap(serviceList[i]);
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: ServiceCard(
+              service: service,
+              isSelected: selected?.id == service.id,
+              onTap: () {
+                ref.read(selectedServiceProvider.notifier).state = service;
+              },
+            ),
+          ).animate(delay: (i * 60).ms).fadeIn().slideY(begin: 0.1);
+        },
+      );
+    },
+  );
+}
 
   Widget _buildStep2SelectDateTime( DateTime selectedDate) {
     final slots = ref.watch(timeSlotsProvider);
@@ -431,27 +444,45 @@ final bookedSlots = selectedBarber == null
     );
   }
 
-  Widget _buildStep3SelectBarber() {
-    final barbers = ref.watch(barbersProvider);
-    final selectedBarber = ref.watch(selectedBarberProvider);
+ Widget _buildStep3SelectBarber() {
+  
+  final barbers = ref.watch(barbersProvider);
+  final selectedBarber = ref.watch(selectedBarberProvider);
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      physics: const BouncingScrollPhysics(),
-      itemCount: barbers.length,
-      itemBuilder: (context, i) {
-        final barber = barbers[i];
-        final isSelected = selectedBarber?.id == barber.id;
+  return barbers.when(
+    loading: () => const Center(
+      child: CircularProgressIndicator(),
+    ),
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: GestureDetector(
-            onTap: barber.isAvailable
-                ? () {
-                    ref.read(selectedBarberProvider.notifier).state = barber;
-                  }
-                : null,
-            child: AnimatedContainer(
+    error: (e, _) => Center(
+      child: Text(e.toString()),
+    ),
+
+    data: (barberList) {
+      final selectedService = ref.watch(selectedServiceProvider);
+
+final filteredBarbers = barberList
+    .map((e) => BarberModel.fromMap(e))
+    .where((barber) =>
+        barber.services.contains(selectedService?.id))
+    .toList();
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        physics: const BouncingScrollPhysics(),
+        itemCount: filteredBarbers.length,
+        itemBuilder: (context, i) {
+          final barber = filteredBarbers[i];
+          final isSelected = selectedBarber?.id == barber.id;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: GestureDetector(
+              onTap: barber.isAvailable
+                  ? () {
+                      ref.read(selectedBarberProvider.notifier).state = barber;
+                    }
+                  : null,
+              child: AnimatedContainer(
               duration: 250.ms,
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
@@ -625,9 +656,12 @@ final bookedSlots = selectedBarber == null
         ).animate(delay: (i * 80).ms).fadeIn().slideX(begin: 0.1);
       },
     );
-  }
-
+ });
+    }
+ 
+  
   Widget _buildBottomBar(
+    
     BuildContext context,
     ServiceModel? service,
     BarberModel? barber,

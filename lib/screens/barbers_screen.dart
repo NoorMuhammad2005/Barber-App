@@ -1,4 +1,5 @@
 // lib/screens/barbers_screen.dart
+import 'package:barbershop_app/models/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -36,13 +37,25 @@ class BarbersScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(20),
-        physics: const BouncingScrollPhysics(),
-        itemCount: barbers.length,
-        itemBuilder: (context, i) {
-          final barber = barbers[i];
-          return Padding(
+      body: barbers.when(
+  loading: () => const Center(
+    child: CircularProgressIndicator(),
+  ),
+
+  error: (e, _) => Center(
+    child: Text(e.toString()),
+  ),
+
+  data: (barberList) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      itemCount: barberList.length,
+      itemBuilder: (context, i) {
+
+        final barber = BarberModel.fromMap(barberList[i]);
+
+        return Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Container(
               decoration: BoxDecoration(
@@ -138,7 +151,7 @@ class BarbersScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         Text(
-                          isArabic ? barber.nameAr : barber.name,
+                         barber.name,
                           style: GoogleFonts.cormorantGaramond(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -147,7 +160,7 @@ class BarbersScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isArabic ? barber.specialtyAr : barber.specialty,
+                          barber.specialty,
                           style: GoogleFonts.raleway(
                             fontSize: 13,
                             color: AppColors.textGold,
@@ -245,8 +258,8 @@ class BarbersScreen extends ConsumerWidget {
             ),
           ).animate(delay: (i * 100).ms).fadeIn().slideY(begin: 0.1);
         },
-      ),
-    );
+      );
+  }));
   }
 
   Widget _statItem(String value, String label, String emoji) {
