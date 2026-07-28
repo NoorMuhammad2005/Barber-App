@@ -95,5 +95,16 @@ Future<void> updateBookingStatus({
       })
       .eq('id', bookingId);
 }
+Future<void> cancelBooking(String bookingId) async {
+  await _client
+      .from('bookings')
+      .update({
+        'status': 'cancelled',
+        'updated_at': DateTime.now().toIso8601String(),
+      })
+      .eq('id', bookingId);
+}
+
+
 }
 

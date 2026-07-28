@@ -29,7 +29,6 @@ class MainShell extends ConsumerWidget {
       const HomeScreen(),
       const ServicesScreen(),
       const MyBookingsScreen(),
-   //   const LocationScreen(),
       const ProfileScreen(),
     ];
 
@@ -62,15 +61,11 @@ class MainShell extends ConsumerWidget {
         'Services'
       ),
       (
-  Icons.event_note_rounded,
-  Icons.event_note_outlined,
-  'My Bookings'
-),
-      // (
-      //   Icons.location_on_rounded,
-      //   Icons.location_on_outlined,
-      //   'Location'
-      // ),
+             Icons.event_note_rounded,
+             Icons.event_note_outlined,
+            'My Bookings'
+           ),
+      
       (
         Icons.person_rounded,
         Icons.person_outlined,

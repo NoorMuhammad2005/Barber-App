@@ -79,8 +79,10 @@ class BarberModel {
     reviewCount: map['review_count'] ?? 0,
     experienceYears: map['experience_years'] ?? 0,
     imageUrl: map['image_url'] ?? '',
-    services: List<String>.from(map['services'] ?? []),
-    bio: map['bio'] ?? '',
+   services: map['services'] == null
+    ? <String>[]
+    : List<String>.from(map['services'] as List),
+    bio: map['bio']?.toString() ?? '',
     isAvailable: map['is_active'] ?? true,
   );
 }

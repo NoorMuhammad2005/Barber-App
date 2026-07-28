@@ -1,4 +1,5 @@
 // lib/screens/admin_screen.dart
+import 'package:barbershop_app/models/models.dart';
 import 'package:barbershop_app/providers/booking_provider.dart';
 import 'package:barbershop_app/providers/profile_provider.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_theme.dart';
 import '../providers/app_provider.dart';
 import '../widgets/common_widgets.dart';
@@ -21,6 +23,13 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
 
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _iconController = TextEditingController();
+  final _categoryController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -30,12 +39,19 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
   @override
   void dispose() {
     _tabs.dispose();
+
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _durationController.dispose();
+    _iconController.dispose();
+    _categoryController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = ref.watch(languageProvider) == 'ar';
     final services = ref.watch(servicesProvider);
     final bookings = ref.watch(allBookingsProvider);
 
@@ -49,57 +65,57 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               color: AppColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-       title: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      "Admin Dashboard",
-      style: GoogleFonts.cormorantGaramond(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      ),
-    ),
-    Text(
-      "Manage your barber business",
-      style: GoogleFonts.raleway(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: AppColors.gold,
-        letterSpacing: 1,
-      ),
-    ),
-  ],
-),
-     actions: [
-  Padding(
-    padding: const EdgeInsets.only(right: 16),
-    child: Stack(
-      children: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.textPrimary,
-            size: 28,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Admin Dashboard",
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              "Manage your barber business",
+              style: GoogleFonts.raleway(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.gold,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
         ),
-        Positioned(
-          right: 8,
-          top: 8,
-          child: Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Stack(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.textPrimary,
+                    size: 28,
+                  ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
-    ),
-  ),
-],
+        ],
       ),
       body: Column(
         children: [
@@ -118,9 +134,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 fontWeight: FontWeight.w700,
               ),
               tabs: [
-                Tab(text: isArabic ? 'الإحصائيات' : 'Dashboard'),
-                Tab(text: isArabic ? 'الحجوزات' : 'Bookings'),
-                Tab(text: isArabic ? 'الخدمات' : 'Services'),
+                Tab(text: 'Dashboard'),
+                Tab(text: 'Bookings'),
+                Tab(text: 'Services'),
               ],
             ),
           ),
@@ -129,9 +145,19 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
             child: TabBarView(
               controller: _tabs,
               children: [
-                _buildDashboard(isArabic),
-                _buildBookingsTab(isArabic, bookings),
-              //  _buildServicesTab(isArabic, services),
+                _buildDashboard(),
+                _buildBookingsTab(bookings),
+                services.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (e, _) => Center(
+                    child: Text(e.toString()),
+                  ),
+                  data: (serviceList) {
+                    return _buildServicesTab(serviceList);
+                  },
+                ),
               ],
             ),
           ),
@@ -140,7 +166,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
     );
   }
 
-  Widget _buildDashboard(bool isArabic) {
+  Widget _buildDashboard() {
+    final dashboard = ref.watch(dashboardProvider);
     final user = ref.watch(profileProvider);
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -149,135 +176,164 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome Card
-Container(
-  width: double.infinity,
-  padding: const EdgeInsets.all(22),
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(22),
-    gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color(0xff2B2B2B),
-        Color(0xff171717),
-      ],
-    ),
-    border: Border.all(
-      color: AppColors.gold.withOpacity(.25),
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: AppColors.gold.withOpacity(.08),
-        blurRadius: 25,
-        offset: const Offset(0, 12),
-      ),
-    ],
-  ),
-  child: Row(
-    children: [
-      Container(
-        width: 68,
-        height: 68,
-        decoration: BoxDecoration(
-          gradient: AppColors.goldGradient,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.admin_panel_settings_rounded,
-          color: Colors.black,
-          size: 34,
-        ),
-      ),
-
-      const SizedBox(width: 18),
-
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Welcome Back",
-              style: GoogleFonts.raleway(
-                color: Colors.white70,
-                fontSize: 13,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xff2B2B2B),
+                  Color(0xff171717),
+                ],
               ),
-            ),
-
-            const SizedBox(height: 6),
-
-           Text(
-  user?.name ?? "Admin",
-  style: GoogleFonts.cormorantGaramond(
-    fontSize: 30,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  ),
-),
-            const SizedBox(height: 8),
-
-            Text(
-              "Manage your barber shop with ease.",
-              style: GoogleFonts.raleway(
-                color: AppColors.textMuted,
-                fontSize: 13,
+              border: Border.all(
+                color: AppColors.gold.withOpacity(.25),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.gold.withOpacity(.08),
+                  blurRadius: 25,
+                  offset: const Offset(0, 12),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ],
-  ),
-).animate().fadeIn().slideY(begin: -.2),
+            child: Row(
+              children: [
+                Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.goldGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.admin_panel_settings_rounded,
+                    color: Colors.black,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Welcome Back",
+                        style: GoogleFonts.raleway(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        user?.name ?? "Admin",
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Manage your barber shop with ease.",
+                        style: GoogleFonts.raleway(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideY(begin: -.2),
 
-const SizedBox(height: 24),
-          // KPI Cards
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.4,
-            children: [
-             
-              _kpiCard('£4,280', isArabic ? 'هذا الشهر' : 'This Month',
-                  Icons.payments_rounded, AppColors.gold, '+18%'),
-              _kpiCard('127', isArabic ? 'حجوزات' : 'Bookings',
-                  Icons.calendar_today_rounded, AppColors.info, '+23%'),
-              _kpiCard('4.9', isArabic ? 'متوسط التقييم' : 'Avg Rating',
-                  Icons.star_rounded, AppColors.warning, '+0.2'),
-              _kpiCard('42', isArabic ? 'عملاء جدد' : 'New Clients',
-                  Icons.people_rounded, AppColors.success, '+12%'),
-            ],
-          ).animate().fadeIn().slideY(begin: 0.1),
+          const SizedBox(height: 24),
+          //     KPI Cards
+          dashboard.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (e, _) => Center(
+              child: Text(e.toString()),
+            ),
+            data: (data) {
+              return GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.4,
+                children: [
+                  _kpiCard(
+                    "£${data['revenue']}",
+                    "Revenue",
+                    Icons.payments_rounded,
+                    AppColors.gold,
+                    "+0%",
+                  ),
+                  _kpiCard(
+                    "${data['bookings']}",
+                    "Bookings",
+                    Icons.calendar_today_rounded,
+                    AppColors.info,
+                    "+0%",
+                  ),
+                  _kpiCard(
+                    "${data['completed']}",
+                    "Completed",
+                    Icons.check_circle,
+                    AppColors.success,
+                    "+0%",
+                  ),
+                  _kpiCard(
+                    "${data['pending']}",
+                    "Pending",
+                    Icons.schedule,
+                    AppColors.warning,
+                    "+0%",
+                  ),
+                ],
+              );
+            },
+          ),
 
           const SizedBox(height: 24),
 
-Row(
-  children: [
-    Expanded(
-      child: _miniStatCard(
-        "Today's Bookings",
-        "18",
-        Icons.calendar_today_rounded,
-        AppColors.info,
-      ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-      child: _miniStatCard(
-        "Active Barbers",
-        "6",
-        Icons.content_cut_rounded,
-        AppColors.success,
-      ),
-    ),
-  ],
-),
-
+          dashboard.when(
+            loading: () => const SizedBox(),
+            error: (_, __) => const SizedBox(),
+            data: (data) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: _miniStatCard(
+                      "Today's Bookings",
+                      "${data["todayBookings"]}",
+                      Icons.calendar_today_rounded,
+                      AppColors.info,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _miniStatCard(
+                      "Pending",
+                      "${data["pendingBookings"]}",
+                      Icons.schedule_rounded,
+                      AppColors.warning,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
           // Revenue Chart
           Text(
-            isArabic ? 'الإيرادات الأسبوعية' : 'Weekly Revenue',
+            'Weekly Revenue',
             style: GoogleFonts.cormorantGaramond(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -287,70 +343,90 @@ Row(
 
           const SizedBox(height: 16),
 
-          Container(
-            height: 200,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.surfaceHighest),
+          dashboard.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: 600,
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (val, meta) {
-                        const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                        return Text(
-                          days[val.toInt()],
-                          style: GoogleFonts.raleway(
-                            fontSize: 11,
-                            color: AppColors.textMuted,
-                          ),
-                        );
-                      },
+            error: (_, __) => const SizedBox(),
+            data: (data) {
+              print(data["weeklyRevenue"]);
+              print(data["weeklyRevenue"].runtimeType);
+
+              final revenue = List<double>.from(data["weeklyRevenue"]);
+              return Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.surfaceHighest,
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  20,
+                  16,
+                  12,
+                ),
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: revenue.isEmpty
+                        ? 100
+                        : revenue.reduce((a, b) => a > b ? a : b) + 20,
+                    barTouchData: BarTouchData(enabled: false),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+                            return Text(
+                              days[value.toInt()],
+                              style: GoogleFonts.raleway(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (value) => const FlLine(
+                        color: AppColors.surfaceHighest,
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(
+                      revenue.length,
+                      (index) => _bar(index, revenue[index]),
                     ),
                   ),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (val) => const FlLine(
-                    color: AppColors.surfaceHighest,
-                    strokeWidth: 1,
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: [
-                  _bar(0, 320),
-                  _bar(1, 480),
-                  _bar(2, 390),
-                  _bar(3, 560),
-                  _bar(4, 440),
-                  _bar(5, 520),
-                  _bar(6, 180),
-                ],
-              ),
-            ),
-          ).animate(delay: 150.ms).fadeIn(),
+              );
+            },
+          ),
 
           const SizedBox(height: 24),
 
-          // Top Services
+          //         // Top Services
           Text(
-            isArabic ? 'الخدمات الأكثر طلبًا' : 'Top Services',
+            'Top Services',
             style: GoogleFonts.cormorantGaramond(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -374,7 +450,7 @@ Row(
             ).animate(delay: (250 + i * 60).ms).fadeIn().slideX(begin: -0.1);
           })),
 
-          const SizedBox(height: 40),
+          //         const SizedBox(height: 40),
         ],
       ),
     );
@@ -395,426 +471,404 @@ Row(
   }
 
   Widget _kpiCard(
-  String value,
-  String label,
-  IconData icon,
-  Color color,
-  String change,
-) {
-  final isPositive = change.startsWith('+');
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+    String change,
+  ) {
+    final isPositive = change.startsWith('+');
 
-  return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xff242424),
-          Color(0xff171717),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xff242424),
+            Color(0xff171717),
+          ],
+        ),
+        border: Border.all(
+          color: AppColors.surfaceHighest,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
-      border: Border.all(
-        color: AppColors.surfaceHighest,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      (isPositive ? Colors.green : Colors.red).withOpacity(.15),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isPositive ? Icons.trending_up : Icons.trending_down,
+                      size: 14,
+                      color: isPositive ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      change,
+                      style: GoogleFonts.raleway(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isPositive ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: GoogleFonts.raleway(
+              fontSize: 13,
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
-      boxShadow: [
-        BoxShadow(
-          color: color.withOpacity(.08),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
+    );
+  }
+
+  Widget _topServiceRow(
+    String name,
+    int pct,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.surfaceHighest,
         ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        Row(
-          children: [
-
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-            ),
-
-            const Spacer(),
-
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 5,
-              ),
-              decoration: BoxDecoration(
-                color: (isPositive
-                        ? Colors.green
-                        : Colors.red)
-                    .withOpacity(.15),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isPositive
-                        ? Icons.trending_up
-                        : Icons.trending_down,
-                    size: 14,
-                    color: isPositive
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    change,
-                    style: GoogleFonts.raleway(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isPositive
-                          ? Colors.green
-                          : Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        const Spacer(),
-
-        Text(
-          value,
-          style: GoogleFonts.cormorantGaramond(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          label,
-          style: GoogleFonts.raleway(
-            fontSize: 13,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
- Widget _topServiceRow(
-  String name,
-  int pct,
-  Color color,
-) {
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceElevated,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: AppColors.surfaceHighest,
       ),
-    ),
-    child: Column(
-      children: [
-
-        Row(
-          children: [
-
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: color.withOpacity(.15),
-                borderRadius: BorderRadius.circular(12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.content_cut_rounded,
+                  color: color,
+                ),
               ),
-              child: Icon(
-                Icons.content_cut_rounded,
-                color: color,
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  Text(
-                    name,
-                    style: GoogleFonts.raleway(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.white,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: GoogleFonts.raleway(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 3),
-
-                  Text(
-                    "$pct Bookings",
-                    style: GoogleFonts.raleway(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
+                    const SizedBox(height: 3),
+                    Text(
+                      "$pct Bookings",
+                      style: GoogleFonts.raleway(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-
-            Text(
-              "$pct%",
-              style: GoogleFonts.raleway(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+              Text(
+                "$pct%",
+                style: GoogleFonts.raleway(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 14),
-
-        ClipRRect(
-          borderRadius: BorderRadius.circular(30),
-          child: LinearProgressIndicator(
-            value: pct / 100,
-            minHeight: 8,
-            backgroundColor: AppColors.surfaceHighest,
-            valueColor: AlwaysStoppedAnimation(color),
+            ],
           ),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: LinearProgressIndicator(
+              value: pct / 100,
+              minHeight: 8,
+              backgroundColor: AppColors.surfaceHighest,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildBookingsTab(
-    bool isArabic,
     AsyncValue<List<Map<String, dynamic>>> bookings,
-) {
-
+  ) {
     return bookings.when(
         loading: () => const Center(
-    child: CircularProgressIndicator(),
-  ),
-
-  error: (e, _) => Center(
-    child: Text(e.toString()),
-  ),
-
-  data: (bookingList) {
-      return Column(
-        children: [
-          // Today header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Row(
-              children: [
-                const Icon(Icons.today_rounded, color: AppColors.gold, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  isArabic ? 'اليوم — ${bookingList.length} مواعيد' : 'Today — ${bookingList.length} appointments',
-                  style: GoogleFonts.raleway(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    isArabic ? 'تصدير' : 'Export',
-                    style: GoogleFonts.raleway(
-                      fontSize: 13,
-                      color: AppColors.gold,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
+              child: CircularProgressIndicator(),
             ),
-          ),
-      
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              physics: const BouncingScrollPhysics(),
-              itemCount: bookingList.length,
-              itemBuilder: (context, i) {
-                final b = bookingList[i];
-                final statusColor = b['status'] == 'confirmed'
-                    ? AppColors.info
-                    : b['status'] == 'completed'
-                        ? AppColors.success
-                        : b['status'] == 'cancelled'
-                            ? AppColors.error
-                            : AppColors.warning;
-      
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.surfaceHighest),
+        error: (e, _) => Center(
+              child: Text(e.toString()),
+            ),
+        data: (bookingList) {
+          return Column(
+            children: [
+              // Today header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.today_rounded,
+                        color: AppColors.gold, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Today — ${bookingList.length} appointments',
+                      style: GoogleFonts.raleway(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                           child: Text(
-  b['time_slot'],
-  style: GoogleFonts.raleway(
-    fontSize: 11,
-    fontWeight: FontWeight.w800,
-    color: statusColor,
-  ),
-),
-                          ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'Export',
+                        style: GoogleFonts.raleway(
+                          fontSize: 13,
+                          color: AppColors.gold,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                b['customer_name']!,
-                                style: GoogleFonts.raleway(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: bookingList.length,
+                  itemBuilder: (context, i) {
+                    final b = bookingList[i];
+                    final statusColor = b['status'] == 'confirmed'
+                        ? AppColors.info
+                        : b['status'] == 'completed'
+                            ? AppColors.success
+                            : b['status'] == 'cancelled'
+                                ? AppColors.error
+                                : AppColors.warning;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.surfaceHighest),
+                        ),
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  b['time_slot'],
+                                  style: GoogleFonts.raleway(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: statusColor,
+                                  ),
                                 ),
                               ),
-                              Text(
-                                '${b['service_id']} • ${b['barber_id']}',
-                                style: GoogleFonts.raleway(
-                                  fontSize: 12,
-                                  color: AppColors.textMuted,
-                                ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    b['customer_name']!,
+                                    style: GoogleFonts.raleway(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${b['services']?['name'] ?? ''} • ${b['barbers']?['name'] ?? ''}',
+                                    style: GoogleFonts.raleway(
+                                      fontSize: 12,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            PopupMenuButton<String>(
+                              onSelected: (value) async {
+                                try {
+                                  await ref
+                                      .read(bookingServiceProvider)
+                                      .updateBookingStatus(
+                                        bookingId: b['id'],
+                                        status: value,
+                                      );
+
+                                  ref.invalidate(allBookingsProvider);
+
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            "Booking updated successfully"),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.toString()),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.more_vert_rounded,
+                                color: AppColors.textMuted,
+                                size: 20,
+                              ),
+                              color: AppColors.surfaceElevated,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              itemBuilder: (_) => [
+                                PopupMenuItem(
+                                  value: 'confirmed',
+                                  child: Text(
+                                    'Confirm',
+                                    style: GoogleFonts.raleway(
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'completed',
+                                  child: Text(
+                                    'Completed',
+                                    style: GoogleFonts.raleway(
+                                      color: AppColors.info,
+                                    ),
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'cancelled',
+                                  child: Text(
+                                    'Cancel',
+                                    style: GoogleFonts.raleway(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
                         ),
-                       PopupMenuButton<String>(
-  onSelected: (value) async {
-  try {
-    await ref.read(bookingServiceProvider).updateBookingStatus(
-      bookingId: b['id'],
-      status: value,
-    );
-
-    ref.invalidate(allBookingsProvider);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Booking updated successfully"),
-        ),
-      );
-    }
-  } catch (e) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-        ),
-      );
-    }
-  }
-},
-  icon: const Icon(
-    Icons.more_vert_rounded,
-    color: AppColors.textMuted,
-    size: 20,
-  ),
-  color: AppColors.surfaceElevated,
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
-  ),
-  itemBuilder: (_) => [
-    PopupMenuItem(
-      value: 'confirmed',
-      child: Text(
-        isArabic ? 'Confirm' : 'Confirm',
-        style: GoogleFonts.raleway(
-          color: AppColors.success,
-        ),
-      ),
-    ),
-    PopupMenuItem(
-      value: 'completed',
-      child: Text(
-        isArabic ? 'Completed' : 'Completed',
-        style: GoogleFonts.raleway(
-          color: AppColors.info,
-        ),
-      ),
-    ),
-    PopupMenuItem(
-      value: 'cancelled',
-      child: Text(
-        isArabic ? 'Cancel' : 'Cancel',
-        style: GoogleFonts.raleway(
-          color: AppColors.error,
-        ),
-      ),
-    ),
-  ],
-)
-                      ],
-                    ),
-                  ),
-                ).animate(delay: (i * 60).ms).fadeIn().slideY(begin: 0.1);
-              },
-            ),
-          ),
-        ],
-      );
- } );
+                      ),
+                    ).animate(delay: (i * 60).ms).fadeIn().slideY(begin: 0.1);
+                  },
+                ),
+              ),
+            ],
+          );
+        });
   }
 
-  Widget _buildServicesTab(bool isArabic, List<dynamic> services) {
+  Widget _buildServicesTab(List<dynamic> services) {
+    final serviceList = services
+        .map((e) => ServiceModel.fromMap(e as Map<String, dynamic>))
+        .toList();
+
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           child: GoldButton(
-            label: isArabic ? '+ إضافة خدمة' : '+ Add Service',
+            label: '+ Add Service',
             height: 48,
-            onTap: () => _showAddServiceSheet(context, isArabic),
+            onTap: () => _showAddServiceSheet(context),
           ),
         ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             physics: const BouncingScrollPhysics(),
-            itemCount: services.length,
+            itemCount: serviceList.length,
             itemBuilder: (context, i) {
-              final svc = services[i];
+              final svc = serviceList[i];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Container(
@@ -844,7 +898,7 @@ Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isArabic ? svc.nameAr : svc.name,
+                              svc.name,
                               style: GoogleFonts.raleway(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -861,14 +915,15 @@ Row(
                           ],
                         ),
                       ),
+                     
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit_rounded,
-                                color: AppColors.textSecondary, size: 18),
-                            onPressed: () =>
-                                _showEditServiceSheet(context, isArabic, svc),
-                          ),
+                        icon: const Icon(Icons.edit, color: Colors.amber),
+                        onPressed: () {
+                          _showEditServiceSheet(context, svc);
+                        },
+                      ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline_rounded,
                                 color: AppColors.error, size: 18),
@@ -887,15 +942,30 @@ Row(
     );
   }
 
-  void _showAddServiceSheet(BuildContext context, bool isArabic) {
-    _showServiceSheet(context, isArabic, null);
+  void _showAddServiceSheet(BuildContext context) {
+    _showServiceSheet(context, null);
   }
 
-  void _showEditServiceSheet(BuildContext context, bool isArabic, dynamic svc) {
-    _showServiceSheet(context, isArabic, svc);
+  void _showEditServiceSheet(BuildContext context, dynamic svc) {
+    _showServiceSheet(context, svc);
   }
 
-  void _showServiceSheet(BuildContext context, bool isArabic, dynamic svc) {
+  void _showServiceSheet(BuildContext context, dynamic svc) {
+    if (svc == null) {
+      _nameController.clear();
+      _descriptionController.clear();
+      _priceController.clear();
+      _durationController.clear();
+      _iconController.clear();
+      _categoryController.clear();
+    } else {
+      _nameController.text = svc.name;
+      _descriptionController.text = svc.description;
+      _priceController.text = svc.price.toString();
+      _durationController.text = svc.durationMinutes.toString();
+      _iconController.text = svc.icon;
+      _categoryController.text = svc.category;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -927,9 +997,7 @@ Row(
               ),
               const SizedBox(height: 20),
               Text(
-                svc == null
-                    ? (isArabic ? 'إضافة خدمة' : 'Add Service')
-                    : (isArabic ? 'تعديل الخدمة' : 'Edit Service'),
+                svc == null ? ('Add Service') : ('Edit Service'),
                 style: GoogleFonts.cormorantGaramond(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -938,11 +1006,10 @@ Row(
               ),
               const SizedBox(height: 20),
               TextField(
-                controller: TextEditingController(
-                    text: svc != null ? (isArabic ? svc.nameAr : svc.name) : ''),
+                controller: _nameController,
                 style: GoogleFonts.raleway(color: AppColors.textPrimary),
                 decoration: InputDecoration(
-                  labelText: isArabic ? 'اسم الخدمة' : 'Service Name',
+                  labelText: 'Service Name',
                 ),
               ),
               const SizedBox(height: 12),
@@ -950,24 +1017,22 @@ Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: TextEditingController(
-                          text: svc != null ? '£${svc.price}' : ''),
+                      controller: _priceController,
                       style: GoogleFonts.raleway(color: AppColors.textPrimary),
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: isArabic ? 'السعر' : 'Price (£)',
+                        labelText: 'Price (£)',
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
-                      controller: TextEditingController(
-                          text: svc != null ? '${svc.durationMinutes}' : ''),
+                      controller: _durationController,
                       style: GoogleFonts.raleway(color: AppColors.textPrimary),
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: isArabic ? 'المدة (دقيقة)' : 'Duration (min)',
+                        labelText: 'Duration (min)',
                       ),
                     ),
                   ),
@@ -975,71 +1040,124 @@ Row(
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: TextEditingController(
-                    text: svc != null
-                        ? (isArabic ? svc.descriptionAr : svc.description)
-                        : ''),
+                controller: _descriptionController,
                 style: GoogleFonts.raleway(color: AppColors.textPrimary),
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: isArabic ? 'الوصف' : 'Description',
+                  labelText: 'Description',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _iconController,
+                decoration: const InputDecoration(
+                  labelText: "Icon (✂️)",
+                ),
+              ),
+              const SizedBox(height: 12),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _categoryController,
+                decoration: const InputDecoration(
+                  labelText: "Category",
                 ),
               ),
               const SizedBox(height: 24),
               GoldButton(
-                label: svc == null
-                    ? (isArabic ? 'إضافة' : 'Add Service')
-                    : (isArabic ? 'حفظ' : 'Save Changes'),
-                onTap: () => Navigator.pop(context),
-              ),
+                  label: svc == null ? 'Add Service' : 'Save Changes',
+                  onTap: () async {
+  final client = Supabase.instance.client;
+
+  if (svc == null) {
+    // ADD
+    await client.from('services').insert({
+      'name': _nameController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'price': double.tryParse(_priceController.text) ?? 0,
+      'duration_minutes':
+          int.tryParse(_durationController.text) ?? 0,
+      'icon': _iconController.text.trim(),
+      'category': _categoryController.text.trim(),
+      'is_active': true,
+      'is_popular': false,
+    });
+  } else {
+    // EDIT
+    await client
+        .from('services')
+        .update({
+          'name': _nameController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'price': double.tryParse(_priceController.text) ?? 0,
+          'duration_minutes':
+              int.tryParse(_durationController.text) ?? 0,
+          'icon': _iconController.text.trim(),
+          'category': _categoryController.text.trim(),
+        })
+        .eq('id', svc.id);
+  }
+
+  ref.invalidate(servicesProvider);
+
+  if (context.mounted) {
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          svc == null
+              ? "Service Added Successfully"
+              : "Service Updated Successfully",
+        ),
+      ),
+    );
+  }
+},),
             ],
           ),
         ),
       ),
     );
   }
+
   Widget _miniStatCard(
-  String title,
-  String value,
-  IconData icon,
-  Color color,
-) {
-  return Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceElevated,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: AppColors.surfaceHighest,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.surfaceHighest,
+        ),
       ),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: color),
-
-        const SizedBox(height: 12),
-
-        Text(
-          value,
-          style: GoogleFonts.cormorantGaramond(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          title,
-          style: GoogleFonts.raleway(
-            fontSize: 12,
-            color: AppColors.textMuted,
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: GoogleFonts.raleway(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }
