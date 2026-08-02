@@ -4,20 +4,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/app_provider.dart';
 import '../utils/app_theme.dart';
 
-class MyBookingsScreen extends ConsumerWidget {
+class MyBookingsScreen extends ConsumerStatefulWidget {
   const MyBookingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyBookingsScreen> createState() => _MyBookingsScreenState();
+}
+
+class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
+  late final RealtimeChannel _channel;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _channel = Supabase.instance.client
+        .channel('bookings-realtime')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'bookings',
+          callback: (payload) {
+            ref.invalidate(myBookingsProvider);
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    Supabase.instance.client.removeChannel(_channel);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final bookings = ref.watch(myBookingsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -31,16 +61,13 @@ class MyBookingsScreen extends ConsumerWidget {
           ),
         ),
       ),
-
       body: bookings.when(
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-
         error: (e, _) => Center(
           child: Text(e.toString()),
         ),
-
         data: (list) {
           if (list.isEmpty) {
             return Center(
@@ -72,8 +99,7 @@ class MyBookingsScreen extends ConsumerWidget {
   }
 }
 
-
-class _BookingCard extends ConsumerWidget  {
+class _BookingCard extends ConsumerWidget {
   final Map<String, dynamic> booking;
 
   const _BookingCard({
@@ -81,37 +107,35 @@ class _BookingCard extends ConsumerWidget  {
   });
 
   @override
- Widget build(BuildContext context, WidgetRef ref) {
-    final barber =
-        booking['barbers'] as Map<String, dynamic>? ?? {};
+  Widget build(BuildContext context, WidgetRef ref) {
+    final barber = booking['barbers'] as Map<String, dynamic>? ?? {};
 
-    final service =
-        booking['services'] as Map<String, dynamic>? ?? {};
+    final service = booking['services'] as Map<String, dynamic>? ?? {};
 
     final status = booking['status'] ?? 'pending';
 
     Color statusColor;
 
-switch (status) {
-  case 'pending':
-    statusColor = Colors.orange;
-    break;
+    switch (status) {
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
 
-  case 'confirmed':
-    statusColor = Colors.green;
-    break;
+      case 'confirmed':
+        statusColor = Colors.green;
+        break;
 
-  case 'completed':
-    statusColor = Colors.blue;
-    break;
+      case 'completed':
+        statusColor = Colors.blue;
+        break;
 
-  case 'cancelled':
-    statusColor = Colors.red;
-    break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        break;
 
-  default:
-    statusColor = Colors.grey;
-}
+      default:
+        statusColor = Colors.grey;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -126,16 +150,12 @@ switch (status) {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundImage:
-                    NetworkImage(barber['image_url'] ?? ''),
+                backgroundImage: NetworkImage(barber['image_url'] ?? ''),
               ),
-
               const SizedBox(width: 15),
-
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       barber['name'] ?? '',
@@ -145,9 +165,7 @@ switch (status) {
                         color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 4),
-
                     Text(
                       service['name'] ?? '',
                       style: GoogleFonts.raleway(
@@ -157,7 +175,6 @@ switch (status) {
                   ],
                 ),
               ),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -165,30 +182,24 @@ switch (status) {
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(.15),
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
                 child: Text(
-  status[0].toUpperCase() + status.substring(1),
-  style: GoogleFonts.raleway(
-    color: statusColor,
-    fontWeight: FontWeight.bold,
-    fontSize: 12,
-  ),
-),
+                  status[0].toUpperCase() + status.substring(1),
+                  style: GoogleFonts.raleway(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded,
-                  size: 18),
-
+              const Icon(Icons.calendar_today_rounded, size: 18),
               const SizedBox(width: 8),
-
               Text(
                 DateFormat('dd MMM yyyy').format(
                   DateTime.parse(
@@ -196,29 +207,20 @@ switch (status) {
                   ),
                 ),
               ),
-
               const Spacer(),
-
-              const Icon(Icons.access_time_rounded,
-                  size: 18),
-
+              const Icon(Icons.access_time_rounded, size: 18),
               const SizedBox(width: 8),
-
               Text(booking['time_slot']),
             ],
           ),
-
           const SizedBox(height: 15),
-
           Row(
             children: [
               Text(
                 "Price",
                 style: GoogleFonts.raleway(),
               ),
-
               const Spacer(),
-
               Text(
                 "£${service['price']}",
                 style: GoogleFonts.raleway(
@@ -229,57 +231,56 @@ switch (status) {
             ],
           ),
           const SizedBox(height: 20),
+          if (status != 'completed' && status != 'cancelled')
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Cancel Booking"),
+                      content: const Text(
+                        "Are you sure you want to cancel this booking?",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("No"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Yes"),
+                        ),
+                      ],
+                    ),
+                  );
 
-if (status != 'completed' && status != 'cancelled')
-  SizedBox(
-    width: double.infinity,
-    child: ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-      ),
-     onPressed: () async {
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Cancel Booking"),
-      content: const Text(
-        "Are you sure you want to cancel this booking?",
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text("No"),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text("Yes"),
-        ),
-      ],
-    ),
-  );
+                  if (confirm != true) return;
 
-  if (confirm != true) return;
+                  await ref
+                      .read(bookingServiceProvider)
+                      .cancelBooking(booking['id']);
 
-  await ref
-      .read(bookingServiceProvider)
-      .cancelBooking(booking['id']);
+                  ref.invalidate(myBookingsProvider);
 
-  ref.invalidate(myBookingsProvider);
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("Booking Cancelled"),
-    ),
-  );
-},
-      icon: const Icon(Icons.close),
-      label: const Text("Cancel Booking"),
-    ),
-  ),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Booking Cancelled"),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.close),
+                label: const Text("Cancel Booking"),
+              ),
+            ),
         ],
       ),
     );

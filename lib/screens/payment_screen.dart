@@ -1,5 +1,6 @@
 // lib/screens/payment_screen.dart
 import 'package:barbershop_app/providers/booking_provider.dart';
+import 'package:barbershop_app/providers/profile_provider.dart';
 import 'package:barbershop_app/screens/main_shell.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +59,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Future<void> _processPayment() async {
+    final profile = ref.read(profileProvider);
+
     setState(() => _isProcessing = true);
     await Future.delayed(const Duration(seconds: 2));
 
@@ -67,7 +70,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   date: widget.selectedDate,
   timeSlot: widget.timeSlot.time,
 
-  customerName: "Customer", // baad me profile se aayega
+  customerName: profile?.name ?? "Customer", 
   customerPhone: "",
   customerEmail:
       Supabase.instance.client.auth.currentUser?.email ?? "",
@@ -100,6 +103,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final isArabic = ref.watch(languageProvider) == 'ar';
+    final profile = ref.watch(profileProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,

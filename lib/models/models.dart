@@ -11,6 +11,7 @@ class ServiceModel {
   final String icon;
   final String category;
   final bool isPopular;
+  final bool isActive;
 
   const ServiceModel({
     required this.id,
@@ -23,10 +24,12 @@ class ServiceModel {
     required this.icon,
     required this.category,
     this.isPopular = false,
+this.isActive = true,
   });
   factory ServiceModel.fromMap(Map<String, dynamic> map) {
   return ServiceModel(
-    id: map['id'],
+   id: map['id'].toString(),
+   
     name: map['name'] ?? '',
     nameAr: map['name_ar'] ?? '',
     description: map['description'] ?? '',
@@ -36,6 +39,7 @@ class ServiceModel {
     icon: map['icon'] ?? '✂️',
     category: map['category'] ?? '',
     isPopular: map['is_popular'] ?? false,
+    isActive: map['is_active'] ?? true,
   );
 }
 }

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../utils/app_theme.dart';
 import '../providers/app_provider.dart';
 import '../widgets/common_widgets.dart';
@@ -30,10 +31,20 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
   final _iconController = TextEditingController();
   final _categoryController = TextEditingController();
 
+  final _barberNameController = TextEditingController();
+  final _specialtyController = TextEditingController();
+  final _experienceController = TextEditingController();
+  final _ratingController = TextEditingController();
+  final _imageController = TextEditingController();
+  final _bioController = TextEditingController();
+
+  String _bookingSearch = "";
+  String _bookingFilter = "All";
+
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -50,9 +61,371 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
     super.dispose();
   }
 
+  void _showBookingStatusSheet(Map<String, dynamic> booking) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Update Booking",
+                  style: GoogleFonts.raleway(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(
+                    Icons.check_circle,
+                    color: Colors.blue,
+                  ),
+                  title: const Text("Confirmed"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    await ref.read(bookingServiceProvider).updateBookingStatus(
+                          bookingId: booking['id'],
+                          status: "confirmed",
+                        );
+
+                    ref.invalidate(allBookingsProvider);
+                    ref.invalidate(dashboardProvider);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.done_all,
+                    color: Colors.green,
+                  ),
+                  title: const Text("Completed"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    await ref.read(bookingServiceProvider).updateBookingStatus(
+                          bookingId: booking['id'],
+                          status: "completed",
+                        );
+
+                    ref.invalidate(allBookingsProvider);
+                    ref.invalidate(dashboardProvider);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.cancel,
+                    color: Colors.red,
+                  ),
+                  title: const Text("Cancelled"),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    await ref.read(bookingServiceProvider).updateBookingStatus(
+                          bookingId: booking['id'],
+                          status: "cancelled",
+                        );
+
+                    ref.invalidate(allBookingsProvider);
+                    ref.invalidate(dashboardProvider);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBookingDetails(Map<String, dynamic> booking) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Booking Details",
+                  style: GoogleFonts.raleway(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 25),
+                _detailRow("Customer", booking['customer_name']),
+                _detailRow("Phone", booking['customer_phone']),
+                _detailRow("Email", booking['customer_email']),
+                _detailRow("Barber", booking['barbers']?['name'] ?? "-"),
+                _detailRow("Service", booking['services']?['name'] ?? "-"),
+                _detailRow("Date", booking['booking_date']),
+                _detailRow("Time", booking['time_slot']),
+                _detailRow("Price", booking['total_price']),
+                _detailRow("Status", booking['status']),
+                const SizedBox(height: 25),
+                GoldButton(
+                  label: "Update Status",
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showBookingStatusSheet(booking);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailRow(String title, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              "$title:",
+              style: GoogleFonts.raleway(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value?.toString() ?? "-",
+              style: GoogleFonts.raleway(
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddBarberSheet(BuildContext context) {
+    _showBarberSheet(context, null);
+  }
+
+  void _showEditBarberSheet(BuildContext context, BarberModel? barber) {
+    _showBarberSheet(context, barber);
+  }
+
+  void _showBarberSheet(BuildContext context, BarberModel? barber) {
+    if (barber == null) {
+      _barberNameController.clear();
+      _specialtyController.clear();
+      _experienceController.clear();
+      _ratingController.clear();
+      _imageController.clear();
+      _bioController.clear();
+    } else {
+      _barberNameController.text = barber.name;
+      _specialtyController.text = barber.specialty;
+      _experienceController.text = barber.experienceYears.toString();
+      _ratingController.text = barber.rating.toString();
+      _imageController.text = barber.imageUrl;
+      _bioController.text = barber.bio;
+    }
+
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (_) => DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (_, controller) => SingleChildScrollView(
+                  controller: controller,
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    24,
+                    24,
+                    MediaQuery.of(context).viewInsets.bottom + 24,
+                  ),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceHighest,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          barber == null ? "Add Barber" : "Edit Barber",
+                          style: GoogleFonts.cormorantGaramond(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: _barberNameController,
+                          decoration: const InputDecoration(
+                            labelText: "Barber Name",
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _specialtyController,
+                          decoration: const InputDecoration(
+                            labelText: "Specialty",
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _experienceController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: "Experience",
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: _ratingController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: "Rating",
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _imageController,
+                          decoration: const InputDecoration(
+                            labelText: "Image URL",
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _bioController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: "Bio",
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        GoldButton(
+                          label: barber == null ? "Add Barber" : "Save Changes",
+                          onTap: () async {
+                            final client = Supabase.instance.client;
+                            final uuid = const Uuid();
+
+                            try {
+                              if (barber == null) {
+                                // ADD BARBER
+                                final response =
+                                    await client.from('barbers').insert({
+                                  'id': uuid.v4(),
+                                  'name': _barberNameController.text.trim(),
+                                  'specialty': _specialtyController.text.trim(),
+                                  'experience_years': int.tryParse(
+                                          _experienceController.text) ??
+                                      0,
+                                  'rating':
+                                      double.tryParse(_ratingController.text) ??
+                                          0,
+                                  'image_url': _imageController.text.trim(),
+                                  'bio': _bioController.text.trim(),
+                                  'is_active': true,
+                                }).select();
+
+                                print("BARBER ADDED: $response");
+                              } else {
+                                // EDIT BARBER
+                                final response = await client
+                                    .from('barbers')
+                                    .update({
+                                      'name': _barberNameController.text.trim(),
+                                      'specialty':
+                                          _specialtyController.text.trim(),
+                                      'experience_years': int.tryParse(
+                                              _experienceController.text) ??
+                                          0,
+                                      'rating': double.tryParse(
+                                              _ratingController.text) ??
+                                          0,
+                                      'image_url': _imageController.text.trim(),
+                                      'bio': _bioController.text.trim(),
+                                    })
+                                    .eq('id', barber.id)
+                                    .select();
+
+                                print("BARBER UPDATED: $response");
+                              }
+
+                              ref.invalidate(barbersProvider);
+
+                              if (context.mounted) {
+                                Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      barber == null
+                                          ? "Barber Added Successfully"
+                                          : "Barber Updated Successfully",
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              print("BARBER ERROR: $e");
+                            }
+                          },
+                        ),
+                      ]),
+                )));
+  }
+
   @override
   Widget build(BuildContext context) {
     final services = ref.watch(servicesProvider);
+    final barbers = ref.watch(barbersProvider);
     final bookings = ref.watch(allBookingsProvider);
 
     return Scaffold(
@@ -133,10 +506,11 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
-              tabs: [
+              tabs: const [
                 Tab(text: 'Dashboard'),
                 Tab(text: 'Bookings'),
                 Tab(text: 'Services'),
+                Tab(text: 'Barbers'),
               ],
             ),
           ),
@@ -156,6 +530,17 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                   ),
                   data: (serviceList) {
                     return _buildServicesTab(serviceList);
+                  },
+                ),
+                barbers.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (e, _) => Center(
+                    child: Text(e.toString()),
+                  ),
+                  data: (barberList) {
+                    return _buildBarbersTab(barberList);
                   },
                 ),
               ],
@@ -277,7 +662,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                     "+0%",
                   ),
                   _kpiCard(
-                    "${data['bookings']}",
+                    "${data['totalBookings']}",
                     "Bookings",
                     Icons.calendar_today_rounded,
                     AppColors.info,
@@ -432,25 +817,183 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
-          ).animate(delay: 200.ms).fadeIn(),
+          ),
 
           const SizedBox(height: 16),
 
-          ...([
-            ('Classic Haircut', 38, AppColors.gold),
-            ('Hot Towel Shave', 24, AppColors.info),
-            ('Beard Trim', 22, AppColors.success),
-            ('Hair Styling', 16, AppColors.warning),
-          ].asMap().entries.map((entry) {
-            final i = entry.key;
-            final data = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _topServiceRow(data.$1, data.$2, data.$3),
-            ).animate(delay: (250 + i * 60).ms).fadeIn().slideX(begin: -0.1);
-          })),
+          dashboard.when(
+            loading: () => const CircularProgressIndicator(),
+            error: (_, __) => const SizedBox(),
+            data: (data) {
+              final services = Map<String, int>.from(data["topServices"]);
+
+              final sorted = services.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+
+              final colors = [
+                AppColors.gold,
+                AppColors.info,
+                AppColors.success,
+                AppColors.warning,
+              ];
+
+              if (sorted.isEmpty) {
+                return const Center(
+                  child: Text("No completed bookings yet"),
+                );
+              }
+
+              return Column(
+                children: List.generate(
+                  sorted.length > 4 ? 4 : sorted.length,
+                  (i) {
+                    final item = sorted[i];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _topServiceRow(
+                        item.key,
+                        item.value,
+                        colors[i % colors.length],
+                      ),
+                    ).animate().fadeIn().slideX(begin: -.1);
+                  },
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          Text(
+            'Recent Bookings',
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          dashboard.when(
+            loading: () => const CircularProgressIndicator(),
+            error: (_, __) => const SizedBox(),
+            data: (data) {
+              final bookings =
+                  List<Map<String, dynamic>>.from(data["recentBookings"]);
+
+              if (bookings.isEmpty) {
+                return const Center(
+                  child: Text("No bookings found"),
+                );
+              }
+
+              return Column(
+                children: bookings.map((b) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _recentBookingCard(b),
+                  );
+                }).toList(),
+              );
+            },
+          ),
 
           //         const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentBookingCard(Map<String, dynamic> booking) {
+    Color statusColor = AppColors.warning;
+
+    switch (booking["status"]) {
+      case "completed":
+        statusColor = AppColors.success;
+        break;
+
+      case "confirmed":
+        statusColor = AppColors.info;
+        break;
+
+      case "cancelled":
+        statusColor = AppColors.error;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.surfaceHighest,
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: statusColor.withValues(alpha: .15),
+            child: Icon(
+              Icons.person,
+              color: statusColor,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booking["customer_name"] ?? "-",
+                  style: GoogleFonts.raleway(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${booking["services"]?["name"] ?? "-"} • ${booking["barbers"]?["name"] ?? "-"}",
+                  style: GoogleFonts.raleway(
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                booking["time_slot"] ?? "",
+                style: GoogleFonts.raleway(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: .15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  booking["status"].toString().toUpperCase(),
+                  style: GoogleFonts.raleway(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -665,9 +1208,82 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               child: Text(e.toString()),
             ),
         data: (bookingList) {
+          final filteredBookings = bookingList.where((b) {
+            final customer =
+                (b['customer_name'] ?? '').toString().toLowerCase();
+
+            final matchesSearch = customer.contains(
+              _bookingSearch.toLowerCase(),
+            );
+
+            final matchesStatus =
+                _bookingFilter == "All" || b['status'] == _bookingFilter;
+
+            return matchesSearch && matchesStatus;
+          }).toList();
           return Column(
             children: [
               // Today header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: "Search customer...",
+                          prefixIcon: const Icon(Icons.search),
+                          filled: true,
+                          fillColor: AppColors.surfaceElevated,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _bookingSearch = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    DropdownButton<String>(
+                      value: _bookingFilter,
+                      dropdownColor: AppColors.surfaceElevated,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(
+                          value: "All",
+                          child: Text("All"),
+                        ),
+                        DropdownMenuItem(
+                          value: "pending",
+                          child: Text("Pending"),
+                        ),
+                        DropdownMenuItem(
+                          value: "confirmed",
+                          child: Text("Confirmed"),
+                        ),
+                        DropdownMenuItem(
+                          value: "completed",
+                          child: Text("Completed"),
+                        ),
+                        DropdownMenuItem(
+                          value: "cancelled",
+                          child: Text("Cancelled"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _bookingFilter = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Row(
@@ -703,9 +1319,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   physics: const BouncingScrollPhysics(),
-                  itemCount: bookingList.length,
+                  itemCount: filteredBookings.length,
                   itemBuilder: (context, i) {
-                    final b = bookingList[i];
+                    final b = filteredBookings[i];
                     final statusColor = b['status'] == 'confirmed'
                         ? AppColors.info
                         : b['status'] == 'completed'
@@ -715,130 +1331,104 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                                 : AppColors.warning;
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceElevated,
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.surfaceHighest),
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  b['time_slot'],
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: statusColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    b['customer_name']!,
-                                    style: GoogleFonts.raleway(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${b['services']?['name'] ?? ''} • ${b['barbers']?['name'] ?? ''}',
-                                    style: GoogleFonts.raleway(
-                                      fontSize: 12,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              onSelected: (value) async {
-                                try {
-                                  await ref
-                                      .read(bookingServiceProvider)
-                                      .updateBookingStatus(
-                                        bookingId: b['id'],
-                                        status: value,
-                                      );
-
-                                  ref.invalidate(allBookingsProvider);
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            "Booking updated successfully"),
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(e.toString()),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              icon: const Icon(
-                                Icons.more_vert_rounded,
-                                color: AppColors.textMuted,
-                                size: 20,
-                              ),
+                          onTap: () {
+                            _showBookingDetails(b);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
                               color: AppColors.surfaceElevated,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              itemBuilder: (_) => [
-                                PopupMenuItem(
-                                  value: 'confirmed',
-                                  child: Text(
-                                    'Confirm',
-                                    style: GoogleFonts.raleway(
-                                      color: AppColors.success,
+                              borderRadius: BorderRadius.circular(16),
+                              border:
+                                  Border.all(color: AppColors.surfaceHighest),
+                            ),
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      b['time_slot'],
+                                      style: GoogleFonts.raleway(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: statusColor,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                PopupMenuItem(
-                                  value: 'completed',
-                                  child: Text(
-                                    'Completed',
-                                    style: GoogleFonts.raleway(
-                                      color: AppColors.info,
-                                    ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        b['customer_name']!,
+                                        style: GoogleFonts.raleway(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${b['services']?['name'] ?? ''} • ${b['barbers']?['name'] ?? ''}',
+                                        style: GoogleFonts.raleway(
+                                          fontSize: 12,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                PopupMenuItem(
-                                  value: 'cancelled',
-                                  child: Text(
-                                    'Cancel',
-                                    style: GoogleFonts.raleway(
-                                      color: AppColors.error,
+                                Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            statusColor.withValues(alpha: .15),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        b['status'].toString().toUpperCase(),
+                                        style: GoogleFonts.raleway(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                    const SizedBox(height: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_calendar,
+                                        color: Colors.amber,
+                                      ),
+                                      onPressed: () async {
+                                        _showBookingStatusSheet(b);
+                                      },
+                                    ),
+                                  ],
+                                )
                               ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ).animate(delay: (i * 60).ms).fadeIn().slideY(begin: 0.1);
+                            ),
+                          ),
+                        )
+                            .animate(delay: (i * 60).ms)
+                            .fadeIn()
+                            .slideY(begin: 0.1));
                   },
                 ),
               ),
@@ -915,19 +1505,130 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                           ],
                         ),
                       ),
-                     
                       Row(
                         children: [
+//                           Switch(
+//   value: svc.isActive,
+//   activeColor: AppColors.gold,
+//   onChanged: (value) async {
+//     try {
+//       await Supabase.instance.client
+//           .from('services')
+//           .update({
+//             'is_active': value,
+//           })
+//           .eq('id', svc.id);
+
+//       ref.invalidate(servicesProvider);
+
+//       if (context.mounted) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text(
+//               value
+//                   ? "Service Activated"
+//                   : "Service Deactivated",
+//             ),
+//           ),
+//         );
+//       }
+//     } catch (e) {
+//       print(e);
+//     }
+//   },
+// ),
                           IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.amber),
-                        onPressed: () {
-                          _showEditServiceSheet(context, svc);
-                        },
-                      ),
+                            icon: const Icon(Icons.edit, color: Colors.amber),
+                            onPressed: () {
+                              _showEditServiceSheet(context, svc);
+                            },
+                          ),
                           IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded,
-                                color: AppColors.error, size: 18),
-                            onPressed: () {},
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: AppColors.error,
+                              size: 18,
+                            ),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("Delete Service"),
+                                  content: Text(
+                                    "Are you sure you want to delete '${svc.name}'?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text(
+                                        "Delete",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              // if (confirm == true) {
+                              //   await Supabase.instance.client
+                              //       .from('services')
+                              //       .delete()
+                              //       .eq('id', svc.id);
+
+                              //   ref.invalidate(servicesProvider);
+
+                              //   if (context.mounted) {
+                              //     ScaffoldMessenger.of(context).showSnackBar(
+                              //       const SnackBar(
+                              //         content:
+                              //             Text("Service Deleted Successfully"),
+                              //       ),
+                              //     );
+                              //   }
+                              // }
+
+                              if (confirm == true) {
+                                try {
+                                  print("Deleting Service...");
+                                  print("ID: ${svc.id}");
+                                  print("Name: ${svc.name}");
+
+                                  final response = await Supabase
+                                      .instance.client
+                                      .from('services')
+                                      .delete()
+                                      .eq('id', svc.id)
+                                      .select();
+
+                                  print("DELETE RESPONSE: $response");
+
+                                  ref.invalidate(servicesProvider);
+
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            "Service Deleted Successfully"),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  print("DELETE ERROR: $e");
+
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                }
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -935,6 +1636,181 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                   ),
                 ),
               ).animate(delay: (i * 60).ms).fadeIn();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBarbersTab(List<dynamic> barbers) {
+    final barberList = barbers
+        .map((e) => BarberModel.fromMap(e as Map<String, dynamic>))
+        .toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: GoldButton(
+            label: '+ Add Barber',
+            height: 48,
+            onTap: () => _showAddBarberSheet(context),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            physics: const BouncingScrollPhysics(),
+            itemCount: barberList.length,
+            itemBuilder: (context, i) {
+              final barber = barberList[i];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.surfaceHighest,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundImage: barber.imageUrl.isNotEmpty
+                            ? NetworkImage(barber.imageUrl)
+                            : null,
+                        child: barber.imageUrl.isEmpty
+                            ? const Icon(Icons.person)
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              barber.name,
+                              style: GoogleFonts.raleway(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              barber.specialty,
+                              style: GoogleFonts.raleway(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  barber.rating.toString(),
+                                  style: GoogleFonts.raleway(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "${barber.experienceYears} Years",
+                                  style: GoogleFonts.raleway(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.amber,
+                            ),
+                            onPressed: () {
+                              _showEditBarberSheet(context, barber);
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("Delete Barber"),
+                                  content: Text(
+                                    "Are you sure you want to delete '${barber.name}'?",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text(
+                                        "Delete",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                try {
+                                  final response = await Supabase
+                                      .instance.client
+                                      .from('barbers')
+                                      .delete()
+                                      .eq('id', barber.id)
+                                      .select();
+
+                                  print("DELETE BARBER: $response");
+
+                                  ref.invalidate(barbersProvider);
+
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text("Barber Deleted Successfully"),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  print("DELETE BARBER ERROR: $e");
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
           ),
         ),
@@ -1064,60 +1940,82 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               ),
               const SizedBox(height: 24),
               GoldButton(
-                  label: svc == null ? 'Add Service' : 'Save Changes',
-                  onTap: () async {
-  final client = Supabase.instance.client;
+                label: svc == null ? 'Add Service' : 'Save Changes',
+                onTap: () async {
+                  final client = Supabase.instance.client;
 
-  if (svc == null) {
-    // ADD
-    await client.from('services').insert({
-      'name': _nameController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'price': double.tryParse(_priceController.text) ?? 0,
-      'duration_minutes':
-          int.tryParse(_durationController.text) ?? 0,
-      'icon': _iconController.text.trim(),
-      'category': _categoryController.text.trim(),
-      'is_active': true,
-      'is_popular': false,
-    });
-  } else {
-    // EDIT
-    await client
-        .from('services')
-        .update({
-          'name': _nameController.text.trim(),
-          'description': _descriptionController.text.trim(),
-          'price': double.tryParse(_priceController.text) ?? 0,
-          'duration_minutes':
-              int.tryParse(_durationController.text) ?? 0,
-          'icon': _iconController.text.trim(),
-          'category': _categoryController.text.trim(),
-        })
-        .eq('id', svc.id);
-  }
+                  if (svc == null) {
+                    // ADD
+                    await client.from('services').insert({
+                      'name': _nameController.text.trim(),
+                      'description': _descriptionController.text.trim(),
+                      'price': double.tryParse(_priceController.text) ?? 0,
+                      'duration_minutes':
+                          int.tryParse(_durationController.text) ?? 0,
+                      'icon': _iconController.text.trim(),
+                      'category': _categoryController.text.trim(),
+                      'is_active': true,
+                      'is_popular': false,
+                    });
+                  } else {
+                    // EDIT
+                    await client.from('services').update({
+                      'name': _nameController.text.trim(),
+                      'description': _descriptionController.text.trim(),
+                      'price': double.tryParse(_priceController.text) ?? 0,
+                      'duration_minutes':
+                          int.tryParse(_durationController.text) ?? 0,
+                      'icon': _iconController.text.trim(),
+                      'category': _categoryController.text.trim(),
+                    }).eq('id', svc.id);
+                  }
 
-  ref.invalidate(servicesProvider);
+                  ref.invalidate(servicesProvider);
 
-  if (context.mounted) {
-    Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          svc == null
-              ? "Service Added Successfully"
-              : "Service Updated Successfully",
-        ),
-      ),
-    );
-  }
-},),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          svc == null
+                              ? "Service Added Successfully"
+                              : "Service Updated Successfully",
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _deleteService(String id) async {
+    final client = Supabase.instance.client;
+
+    try {
+      await client.from('services').delete().eq('id', id);
+
+      ref.invalidate(servicesProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Service Deleted Successfully"),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   }
 
   Widget _miniStatCard(

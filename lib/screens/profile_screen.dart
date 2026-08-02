@@ -21,84 +21,40 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabs;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _tabs = TabController(length: 2, vsync: this);
-  // }
+  // late TabController _tabs;
 
   @override
-void initState() {
-  super.initState();
-  _tabs = TabController(length: 2, vsync: this);
+  void initState() {
+    super.initState();
 
-  Future.microtask(() async {
-    final currentUser = Supabase.instance.client.auth.currentUser;
+    Future.microtask(() async {
+      final currentUser = Supabase.instance.client.auth.currentUser;
 
-    if (currentUser != null) {
-      await ref
-          .read(profileProvider.notifier)
-          .loadProfile(currentUser.id);
-    }
-  });
-}
+      if (currentUser != null) {
+        await ref.read(profileProvider.notifier).loadProfile(currentUser.id);
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _tabs.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-  //  final isArabic = ref.watch(languageProvider) == 'ar';
+    //  final isArabic = ref.watch(languageProvider) == 'ar';
     final user = ref.watch(profileProvider);
     final bookings = ref.watch(bookingHistoryProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, _) => [
-          SliverToBoxAdapter(child: _buildHeader(user)),
-        ],
-        body: Column(
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
           children: [
-            // Tab Bar
-            Container(
-              color: AppColors.surface,
-              child: TabBar(
-                controller: _tabs,
-                indicatorColor: AppColors.gold,
-                indicatorWeight: 2,
-                labelColor: AppColors.gold,
-                unselectedLabelColor: AppColors.textMuted,
-                labelStyle: GoogleFonts.raleway(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-                // tabs: [
-                //   Tab(text: isArabic ? 'الملف الشخصي' : 'Profile'),
-                //   Tab(text: isArabic ? 'الحجوزات' : 'Bookings'),
-                // ],
-                tabs: const [
-                 Tab(text: 'Profile'),
-                 Tab(text: 'Bookings'),
-             ],
-              ),
-            ),
-
-            Expanded(
-              child: TabBarView(
-                controller: _tabs,
-                children: [
-                  _buildProfileTab(user),
-                  _buildBookingsTab(bookings),
-                ],
-              ),
-            ),
+            _buildHeader(user),
+            _buildProfileTab(user),
           ],
         ),
       ),
@@ -135,8 +91,17 @@ void initState() {
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Text('👤', style: TextStyle(fontSize: 40)),
+                child: Center(
+                  child: Text(
+                    user?.name.isNotEmpty == true
+                        ? user!.name[0].toUpperCase()
+                        : "U",
+                    style: GoogleFonts.raleway(
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
                 ),
               ),
               Positioned(
@@ -162,37 +127,65 @@ void initState() {
 
           const SizedBox(height: 16),
 
-         Text(
-  user?.name ?? "Guest User",
-  style: GoogleFonts.cormorantGaramond(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
-  ),
-),
+          Text(
+            user?.name ?? "Guest User",
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
 
           Text(
-            'Premium Member',
+            user?.email ?? "",
             style: GoogleFonts.raleway(
               fontSize: 13,
-              color: AppColors.textGold,
-              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
             ),
-          ).animate(delay: 150.ms).fadeIn(),
+          ),
 
           const SizedBox(height: 20),
 
-          // Member stats
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-             _headerStat('8', 'Visits', '💈'),
-              Container(width: 1, height: 36, color: AppColors.surfaceHighest),
-             _headerStat('4.9', 'My Rating', '⭐'),
-              Container(width: 1, height: 36, color: AppColors.surfaceHighest),
-             _headerStat('£240', 'Spent', '💷'),
+              Expanded(
+                child: _profileStatCard(
+                  "Bookings",
+                  "12",
+                  Icons.calendar_month_rounded,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _profileStatCard(
+                  "Visits",
+                  "8",
+                  Icons.content_cut_rounded,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _profileStatCard(
+                  "Spent",
+                  "£240",
+                  Icons.payments_rounded,
+                ),
+              ),
             ],
-          ).animate(delay: 200.ms).fadeIn(),
+          ).animate(delay: 250.ms).fadeIn().slideY(begin: .15),
+
+          // Member stats
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //   children: [
+          //     _headerStat('8', 'Visits', '💈'),
+          //     Container(width: 1, height: 36, color: AppColors.surfaceHighest),
+          //     _headerStat('4.9', 'My Rating', '⭐'),
+          //     Container(width: 1, height: 36, color: AppColors.surfaceHighest),
+          //     _headerStat('£240', 'Spent', '💷'),
+          //   ],
+          // ).animate(delay: 200.ms).fadeIn(),
         ],
       ),
     );
@@ -222,6 +215,49 @@ void initState() {
     );
   }
 
+  Widget _profileStatCard(
+    String title,
+    String value,
+    IconData icon,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: .15),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: AppColors.gold,
+            size: 22,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: GoogleFonts.raleway(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfileTab(UserModel? user) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -229,247 +265,239 @@ void initState() {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         _sectionTitle('Personal Info'),
+          _sectionTitle("Personal Information"),
           const SizedBox(height: 12),
           _infoTile(
             Icons.person_rounded,
-           'Full Name',
-           user?.name ?? 'Guest User',
+            'Full Name',
+            user?.name ?? 'Guest User',
           ),
           _infoTile(
             Icons.phone_rounded,
-           'Phone',
+            'Phone',
             user?.phone ?? 'Not Available',
           ),
           _infoTile(
             Icons.mail_rounded,
-           'Email',
-           user?.email ?? 'Not Available',
+            'Email',
+            user?.email ?? 'Not Available',
           ),
           _infoTile(
-            Icons.location_on_rounded,
-           'Location',
-            'London, UK',
+            Icons.badge_rounded,
+            "Member Since",
+            DateFormat("dd MMM yyyy").format(DateTime.now()),
           ),
           const SizedBox(height: 28),
-         _sectionTitle('Preferences'),
-          const SizedBox(height: 12),
-          _toggleTile(
-            Icons.notifications_rounded,
-           'Notifications',
-            true,
-          ),
-          _toggleTile(
-            Icons.calendar_today_rounded,
-           'Booking Reminders',
-            true,
-          ),
-          _toggleTile(
-            Icons.local_offer_rounded,
-           'Promotions',
-            false,
-          ),
-          const SizedBox(height: 28),
-        _sectionTitle('Account'),
+         
+         _sectionTitle("Quick Actions"),
           const SizedBox(height: 12),
           _actionTile(
-              Icons.shield_rounded,
-             'Security & Privacy',
-              AppColors.info),
-          _actionTile(
-              Icons.help_outline_rounded,
-              'Help & Support',
+              Icons.shield_rounded, 'Security & Privacy', AppColors.info),
+          _actionTile(Icons.help_outline_rounded, 'Help & Support',
               AppColors.textSecondary),
-          _actionTile(Icons.star_rounded,
-              'Rate the App', AppColors.gold),
+          _actionTile(Icons.star_rounded, 'Rate the App', AppColors.gold),
           const SizedBox(height: 16),
-         OutlinedButton.icon(
-  onPressed: () async {
+         GoldButton(
+  label: "Sign Out",
+  height: 52,
+  onTap: () async {
+    final logout = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Sign Out"),
+        content: const Text(
+          "Are you sure you want to sign out?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Sign Out"),
+          ),
+        ],
+      ),
+    );
+
+    if (logout != true) return;
+
     await Supabase.instance.client.auth.signOut();
 
     if (context.mounted) {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => AuthScreen(),
+          builder: (_) => const AuthScreen(),
         ),
         (route) => false,
       );
     }
   },
-            icon: const Icon(Icons.logout_rounded, size: 18),
-           label: const Text('Sign Out'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              foregroundColor: AppColors.error,
-              side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
+),
           const SizedBox(height: 40),
         ],
       ),
     );
   }
 
- Widget _buildBookingsTab(List<BookingModel> bookings) {
-    if (bookings.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('📅', style: TextStyle(fontSize: 60)),
-            const SizedBox(height: 16),
-            Text(
-              'No bookings yet',
-              style: GoogleFonts.cormorantGaramond(
-                fontSize: 24,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+//  Widget _buildBookingsTab(List<BookingModel> bookings) {
+//     if (bookings.isEmpty) {
+//       return Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             const Text('📅', style: TextStyle(fontSize: 60)),
+//             const SizedBox(height: 16),
+//             Text(
+//               'No bookings yet',
+//               style: GoogleFonts.cormorantGaramond(
+//                 fontSize: 24,
+//                 color: AppColors.textSecondary,
+//               ),
+//             ),
+//           ],
+//         ),
+//       );
+//     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      itemCount: bookings.length,
-      itemBuilder: (context, i) {
-        final booking = bookings[i];
-        final isUpcoming = booking.date.isAfter(DateTime.now());
+//     return ListView.builder(
+//       padding: const EdgeInsets.all(20),
+//       physics: const BouncingScrollPhysics(),
+//       itemCount: bookings.length,
+//       itemBuilder: (context, i) {
+//         final booking = bookings[i];
+//         final isUpcoming = booking.date.isAfter(DateTime.now());
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: isUpcoming
-                    ? AppColors.gold.withValues(alpha: 0.3)
-                    : AppColors.surfaceHighest,
-              ),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _statusColor(booking.status).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                      _statusLabel(booking.status),
-                        style: GoogleFonts.raleway(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _statusColor(booking.status),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      DateFormat('MMM d, y').format(booking.date),
-                      style: GoogleFonts.raleway(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  booking.serviceName,
-                  style: GoogleFonts.cormorantGaramond(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.person_rounded,
-                        size: 14, color: AppColors.textMuted),
-                    const SizedBox(width: 6),
-                    Text(
-                      booking.barberName,
-                      style: GoogleFonts.raleway(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.access_time_rounded,
-                        size: 14, color: AppColors.textMuted),
-                    const SizedBox(width: 6),
-                    Text(
-                      booking.timeSlot,
-                      style: GoogleFonts.raleway(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '£${booking.price.toStringAsFixed(2)}',
-                      style: GoogleFonts.cormorantGaramond(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.gold,
-                      ),
-                    ),
-                    if (booking.status == BookingStatus.completed)
-                      TextButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.star_outline_rounded,
-                            size: 16, color: AppColors.gold),
-                        label: Text(
-                          'Review',
-                          style: GoogleFonts.raleway(
-                            fontSize: 13,
-                            color: AppColors.gold,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    if (isUpcoming)
-                      TextButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.cancel_outlined,
-                            size: 16, color: AppColors.error),
-                        label: Text(
-                           'Cancel',
-                          style: GoogleFonts.raleway(
-                            fontSize: 13,
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ).animate(delay: (i * 80).ms).fadeIn().slideY(begin: 0.1);
-      },
-    );
-  }
+//         return Padding(
+//           padding: const EdgeInsets.only(bottom: 14),
+//           child: Container(
+//             decoration: BoxDecoration(
+//               color: AppColors.surfaceElevated,
+//               borderRadius: BorderRadius.circular(18),
+//               border: Border.all(
+//                 color: isUpcoming
+//                     ? AppColors.gold.withValues(alpha: 0.3)
+//                     : AppColors.surfaceHighest,
+//               ),
+//             ),
+//             padding: const EdgeInsets.all(16),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Row(
+//                   children: [
+//                     Container(
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 10, vertical: 4),
+//                       decoration: BoxDecoration(
+//                         color: _statusColor(booking.status).withValues(alpha: 0.15),
+//                         borderRadius: BorderRadius.circular(8),
+//                       ),
+//                       child: Text(
+//                       _statusLabel(booking.status),
+//                         style: GoogleFonts.raleway(
+//                           fontSize: 11,
+//                           fontWeight: FontWeight.w700,
+//                           color: _statusColor(booking.status),
+//                         ),
+//                       ),
+//                     ),
+//                     const Spacer(),
+//                     Text(
+//                       DateFormat('MMM d, y').format(booking.date),
+//                       style: GoogleFonts.raleway(
+//                         fontSize: 12,
+//                         color: AppColors.textMuted,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 12),
+//                 Text(
+//                   booking.serviceName,
+//                   style: GoogleFonts.cormorantGaramond(
+//                     fontSize: 20,
+//                     fontWeight: FontWeight.w700,
+//                     color: AppColors.textPrimary,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 6),
+//                 Row(
+//                   children: [
+//                     const Icon(Icons.person_rounded,
+//                         size: 14, color: AppColors.textMuted),
+//                     const SizedBox(width: 6),
+//                     Text(
+//                       booking.barberName,
+//                       style: GoogleFonts.raleway(
+//                         fontSize: 13,
+//                         color: AppColors.textSecondary,
+//                       ),
+//                     ),
+//                     const SizedBox(width: 16),
+//                     const Icon(Icons.access_time_rounded,
+//                         size: 14, color: AppColors.textMuted),
+//                     const SizedBox(width: 6),
+//                     Text(
+//                       booking.timeSlot,
+//                       style: GoogleFonts.raleway(
+//                         fontSize: 13,
+//                         color: AppColors.textSecondary,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 const SizedBox(height: 12),
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: [
+//                     Text(
+//                       '£${booking.price.toStringAsFixed(2)}',
+//                       style: GoogleFonts.cormorantGaramond(
+//                         fontSize: 22,
+//                         fontWeight: FontWeight.w700,
+//                         color: AppColors.gold,
+//                       ),
+//                     ),
+//                     if (booking.status == BookingStatus.completed)
+//                       TextButton.icon(
+//                         onPressed: () {},
+//                         icon: const Icon(Icons.star_outline_rounded,
+//                             size: 16, color: AppColors.gold),
+//                         label: Text(
+//                           'Review',
+//                           style: GoogleFonts.raleway(
+//                             fontSize: 13,
+//                             color: AppColors.gold,
+//                             fontWeight: FontWeight.w700,
+//                           ),
+//                         ),
+//                       ),
+//                     if (isUpcoming)
+//                       TextButton.icon(
+//                         onPressed: () {},
+//                         icon: const Icon(Icons.cancel_outlined,
+//                             size: 16, color: AppColors.error),
+//                         label: Text(
+//                            'Cancel',
+//                           style: GoogleFonts.raleway(
+//                             fontSize: 13,
+//                             color: AppColors.error,
+//                             fontWeight: FontWeight.w700,
+//                           ),
+//                         ),
+//                       ),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ).animate(delay: (i * 80).ms).fadeIn().slideY(begin: 0.1);
+//       },
+//     );
+//   }
 
   Color _statusColor(BookingStatus status) {
     switch (status) {
@@ -484,18 +512,18 @@ void initState() {
     }
   }
 
- String _statusLabel(BookingStatus status) {
-  switch (status) {
-    case BookingStatus.confirmed:
-      return 'Confirmed';
-    case BookingStatus.completed:
-      return 'Completed';
-    case BookingStatus.cancelled:
-      return 'Cancelled';
-    case BookingStatus.pending:
-      return 'Pending';
+  String _statusLabel(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.confirmed:
+        return 'Confirmed';
+      case BookingStatus.completed:
+        return 'Completed';
+      case BookingStatus.cancelled:
+        return 'Cancelled';
+      case BookingStatus.pending:
+        return 'Pending';
+    }
   }
-}
 
   Widget _sectionTitle(String title) {
     return Text(
@@ -508,43 +536,73 @@ void initState() {
     );
   }
 
-  Widget _infoTile(IconData icon, String label, String value) {
+  Widget _infoTile(
+    IconData icon,
+    String label,
+    String value,
+  ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceHighest),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: .12),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .15),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.gold, size: 20),
-          const SizedBox(width: 14),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: AppColors.goldGradient,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.black,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  label.toUpperCase(),
                   style: GoogleFonts.raleway(
                     fontSize: 11,
+                    letterSpacing: 1,
                     color: AppColors.textMuted,
-                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                const SizedBox(height: 5),
                 Text(
                   value,
                   style: GoogleFonts.raleway(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.edit_outlined, color: AppColors.textMuted, size: 18),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textMuted,
+          ),
         ],
       ),
     );
@@ -641,46 +699,65 @@ void initState() {
   //   );
   // }
 
-  Widget _actionTile(IconData icon, String label, Color iconColor) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceHighest),
+  Widget _actionTile(
+  IconData icon,
+  String label,
+  Color iconColor,
+) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceElevated,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(
+        color: AppColors.gold.withValues(alpha: .10),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: iconColor, size: 22),
-        title: Text(
-          label,
-          style: GoogleFonts.raleway(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {},
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded,
-            color: AppColors.textMuted, size: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        onTap: () {},
-        // onTap: () async {
-        //   await Supabase.instance.client.auth.signOut();
+        child: Row(
+          children: [
 
-        //   if (context.mounted) {
-        //     Navigator.of(context).pushAndRemoveUntil(
-        //       MaterialPageRoute(
-        //         builder: (_) => AuthScreen(),
-        //       ),
-        //       (route) => false,
-        //     );
-        //   }
-        // },
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.raleway(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
 }
-
-
-
+}
