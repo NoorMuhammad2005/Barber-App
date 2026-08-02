@@ -652,7 +652,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 1.4,
+                childAspectRatio: 0.95,
                 children: [
                   _kpiCard(
                     "£${data['revenue']}",
@@ -716,6 +716,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               );
             },
           ),
+
+          const SizedBox(height: 24),
+
           // Revenue Chart
           Text(
             'Weekly Revenue',
@@ -1023,7 +1026,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
     final isPositive = change.startsWith('+');
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
@@ -1095,11 +1098,11 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
               ),
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Text(
             value,
             style: GoogleFonts.cormorantGaramond(
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
